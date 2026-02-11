@@ -1,0 +1,49 @@
+# System
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Node
+node_modules/
+web/node_modules/
+obsidian-plugin/node_modules/
+npm-debug.log
+
+# Go
+/bin/
+/web/dist/
+/data/*.db
+/data/*.db-*
+/config.yaml
+vendor/
+*.local.yaml
+*.log
+logs/
+coverage.out
+coverage.html
+tmp/
+*.tmp
+
+# Internal Docs (local only, do not publish to GitHub)
+/openspec/
+/notes/
+/.obsidian/
+/docs/
+
+# Markdown policy: keep README files only
+*.md
+/AGENT.md
+/AGENTS.md
+!README.md
+!**/README.md
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Artifacts
+design_demo.html
+*.png
+*.webp
