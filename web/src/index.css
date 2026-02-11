@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Noto Serif SC", serif;
+  --font-sans: "Inter", -apple-system, sans-serif;
+
+  /* Claude 配色 */
+  --color-bg: #FAF9F5;
+  --color-surface: #FFFFFF;
+  --color-border: #E8E5DE;
+  --color-primary: #C96442;
+  --color-primary-light: #D4845F;
+  --color-primary-bg: #FAF0EB;
+  --color-text: #2D2B28;
+  --color-text-secondary: #6B6560;
+  --color-text-muted: #9B9590;
+  --color-sidebar-bg: #F0EDE6;
+  --color-up: #16A34A;
+  --color-down: #DC2626;
+}
+
+:root {
+  font-family: var(--font-sans);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+@layer utilities {
+  .font-serif {
+    font-family: var(--font-serif);
+  }
+}

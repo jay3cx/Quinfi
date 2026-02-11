@@ -1,0 +1,54 @@
+# FundMind 配置文件示例
+# 复制此文件为 config.yaml 并根据需要修改
+
+server:
+  port: "8080"        # HTTP 服务端口
+  mode: "debug"       # debug, release, test
+
+log:
+  level: "info"       # debug, info, warn, error
+  env: "development"  # development(可读格式), production(JSON格式)
+
+llm:
+  base_url: "http://127.0.0.1:8045"  # LLM 中转代理地址
+  api_key: ""                          # API Key（推荐通过环境变量 LLM_API_KEY 设置）
+  max_retries: 2                       # LLM 调用最大重试次数（指数退避）
+  # 环境变量覆盖：
+  #   LLM_BASE_URL - 覆盖 base_url
+  #   LLM_API_KEY  - 覆盖 api_key
+
+db:
+  path: "data/fundmind.db"  # SQLite 数据库路径，留空则纯内存模式
+  # 环境变量覆盖：FUNDMIND_DB_PATH
+
+session:
+  ttl: "24h"  # 会话过期时间（支持 Go duration 格式：1h, 24h, 72h 等）
+
+rss:
+  enabled: true  # 是否启用 RSS 新闻抓取
+  feeds:
+    # 专业金融（证券、基金、外汇、大宗商品）
+    - url: "https://cn.investing.com/rss/news.rss"
+      name: "Investing.com财经"
+      interval: "10m"
+    - url: "https://feedx.net/rss/wsj.xml"
+      name: "华尔街日报(中文)"
+      interval: "30m"
+    # 科技财经
+    - url: "https://36kr.com/feed-newsflash"
+      name: "36氪快讯"
+      interval: "10m"
+    # 宏观经济
+    - url: "https://feedx.net/rss/jingjiribao.xml"
+      name: "经济日报"
+      interval: "30m"
+    - url: "https://feedx.net/rss/nikkei.xml"
+      name: "日经中文网"
+      interval: "30m"
+    # 如有自建 RSSHub，可添加更多专业源：
+    # - url: "https://your-rsshub.com/cls/telegraph"
+    #   name: "财联社电报"
+    #   interval: "10m"
+    # - url: "https://your-rsshub.com/wallstreetcn/news/global"
+    #   name: "华尔街见闻"
+    #   interval: "15m"
