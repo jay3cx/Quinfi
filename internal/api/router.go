@@ -13,8 +13,10 @@ import (
 	"github.com/jay3cx/fundmind/internal/config"
 	"github.com/jay3cx/fundmind/internal/datasource"
 	"github.com/jay3cx/fundmind/internal/datasource/eastmoney"
+	"github.com/jay3cx/fundmind/internal/analyzer"
 	"github.com/jay3cx/fundmind/internal/debate"
 	"github.com/jay3cx/fundmind/internal/memory"
+	"github.com/jay3cx/fundmind/internal/orchestrator"
 	"github.com/jay3cx/fundmind/internal/portfolio"
 	"github.com/jay3cx/fundmind/internal/rss"
 	"github.com/jay3cx/fundmind/internal/scheduler"
@@ -74,6 +76,33 @@ func SetupRouter(cfg *config.Config, db *sql.DB) *SetupResult {
 	debateOrch := debate.NewOrchestrator(agentClient, toolRegistry)
 	debateAdapter := debate.NewToolAdapter(debateOrch)
 	toolRegistry.Register(agent.NewRunDebateTool(debateAdapter))
+
+	// ====== Orchestrator（深度分析） ======
+	managerAnalyzer := analyzer.NewManagerAnalyzer(cachedDS, agentClient)
+	macroAnalyzer := analyzer.NewMacroAnalyzer(agentClient)
+	fundAnalyzer := analyzer.NewFundAnalyzer(cachedDS, agentClient)
+
+	orch := orchestrator.NewOrchestrator(
+		fundAnalyzer, managerAnalyzer, macroAnalyzer,
+		debateOrch, nil, // newsFunc 后续接入
+	)
+
+	// 注册深度分析端点
+	v1.POST("/analysis/deep", func(c *gin.Context) {
+		var req struct {
+			Code string `json:"code" binding:"required"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(400, gin.H{"error": "缺少基金代码"})
+			return
+		}
+		report, err := orch.DeepAnalysis(c.Request.Context(), req.Code)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, report)
+	})
 
 	// ====== Agent ======
 	fundAgent := agent.NewFundAgent(agentClient, toolRegistry)
