@@ -1,11 +1,14 @@
 import { useState } from "react"
-import { LayoutDashboard, Briefcase, Plus, X, MessageSquare, PanelLeftClose, PanelLeft, Search } from "lucide-react"
+import { LayoutDashboard, Briefcase, Plus, X, MessageSquare, PanelLeftClose, PanelLeft, Search, FlaskConical, PiggyBank, GitCompareArrows } from "lucide-react"
 import { useLocation, useNavigate } from "react-router-dom"
 import { useSessionStore } from "@/stores/sessionStore"
 
 const navItems = [
     { icon: LayoutDashboard, label: "Market", path: "/market" },
     { icon: Briefcase, label: "Portfolio", path: "/portfolio" },
+    { icon: FlaskConical, label: "回测实验室", path: "/backtest" },
+    { icon: PiggyBank, label: "定投模拟", path: "/dca" },
+    { icon: GitCompareArrows, label: "基金PK", path: "/compare" },
 ]
 
 export function Sidebar() {
