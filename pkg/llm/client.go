@@ -152,10 +152,10 @@ func GetDefaultModel(task TaskType) ModelID {
 	case TaskLight:
 		return ModelGemini3Flash
 	case TaskDaily:
-		return ModelClaudeSonnet45
+		return ModelGemini3ProHigh
 	case TaskDeep:
-		return ModelClaudeOpus45Thinking
+		return ModelGemini3ProHigh
 	default:
-		return ModelClaudeSonnet45
+		return ModelGemini3ProHigh
 	}
 }

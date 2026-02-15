@@ -84,7 +84,7 @@ func (t *WeeklyReviewTask) Run(ctx context.Context) error {
 （本周投资一句话概括）`, memoryText, time.Now().Format("2006-01-02"))
 
 	resp, err := t.client.Chat(ctx, &llm.ChatRequest{
-		Model:       llm.ModelClaudeSonnet45,
+		Model:       llm.ModelGemini3ProHigh,
 		Messages:    []llm.Message{{Role: llm.RoleUser, Content: reviewPrompt}},
 		MaxTokens:   3000,
 		Temperature: 0.3,
