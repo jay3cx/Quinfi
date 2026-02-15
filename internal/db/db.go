@@ -102,6 +102,45 @@ CREATE TABLE IF NOT EXISTS memories (
 	updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_memories_user_type ON memories(user_id, type);
+
+-- 基金元数据缓存
+CREATE TABLE IF NOT EXISTS funds (
+	code TEXT PRIMARY KEY,
+	name TEXT NOT NULL,
+	type TEXT NOT NULL DEFAULT '',
+	company TEXT NOT NULL DEFAULT '',
+	scale REAL DEFAULT 0,
+	establish_at DATETIME,
+	manager_name TEXT NOT NULL DEFAULT '',
+	updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 净值历史（时序数据）
+CREATE TABLE IF NOT EXISTS nav_history (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	fund_code TEXT NOT NULL,
+	date TEXT NOT NULL,
+	unit_nav REAL NOT NULL,
+	accum_nav REAL NOT NULL,
+	daily_return REAL DEFAULT 0,
+	created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	UNIQUE(fund_code, date)
+);
+CREATE INDEX IF NOT EXISTS idx_nav_history_code_date ON nav_history(fund_code, date DESC);
+
+-- 持仓快照（按季度）
+CREATE TABLE IF NOT EXISTS holdings_snapshot (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	fund_code TEXT NOT NULL,
+	quarter TEXT NOT NULL,
+	stock_code TEXT NOT NULL,
+	stock_name TEXT NOT NULL,
+	ratio REAL DEFAULT 0,
+	share_count REAL DEFAULT 0,
+	market_value REAL DEFAULT 0,
+	created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_holdings_code_quarter ON holdings_snapshot(fund_code, quarter DESC);
 `
 
 // Open 打开或创建数据库
