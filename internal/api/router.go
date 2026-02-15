@@ -4,6 +4,7 @@ package api
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"net/http"
 	"strings"
 	"time"
@@ -19,6 +20,8 @@ import (
 	"github.com/jay3cx/fundmind/internal/memory"
 	"github.com/jay3cx/fundmind/internal/orchestrator"
 	"github.com/jay3cx/fundmind/internal/portfolio"
+	"github.com/jay3cx/fundmind/internal/quant"
+	"github.com/jay3cx/fundmind/internal/task"
 	"github.com/jay3cx/fundmind/internal/rss"
 	"github.com/jay3cx/fundmind/internal/scheduler"
 	"github.com/jay3cx/fundmind/internal/vision"
@@ -87,12 +90,20 @@ func SetupRouter(cfg *config.Config, db *sql.DB) *SetupResult {
 	macroAnalyzer := analyzer.NewMacroAnalyzer(agentClient)
 	fundAnalyzer := analyzer.NewFundAnalyzer(cachedDS, agentClient, fundRepo)
 
+	// 注册调仓检测工具
+	toolRegistry.Register(agent.NewDetectRebalanceTool(&rebalanceAdapter{analyzer: fundAnalyzer}))
+
 	orch := orchestrator.NewOrchestrator(
 		fundAnalyzer, managerAnalyzer, macroAnalyzer,
 		debateOrch, nil, // newsFunc 后续接入
 	)
 
-	// 注册深度分析端点
+	// ====== 异步任务管理器 ======
+	taskManager := task.NewManager(db, 3)
+	taskHandler := NewTaskHandler(taskManager)
+	taskHandler.RegisterRoutes(v1)
+
+	// 注册深度分析端点（异步）
 	v1.POST("/analysis/deep", func(c *gin.Context) {
 		var req struct {
 			Code string `json:"code" binding:"required"`
@@ -101,13 +112,36 @@ func SetupRouter(cfg *config.Config, db *sql.DB) *SetupResult {
 			c.JSON(400, gin.H{"error": "缺少基金代码"})
 			return
 		}
-		report, err := orch.DeepAnalysis(c.Request.Context(), req.Code)
+
+		taskID, err := taskManager.Submit("deep_analysis", map[string]string{"code": req.Code})
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			c.JSON(500, gin.H{"error": "创建任务失败: " + err.Error()})
 			return
 		}
-		c.JSON(200, report)
+
+		// 后台执行
+		code := req.Code
+		taskManager.Execute(taskID, func(ctx context.Context, reportProgress func(int, string, ...string)) (string, error) {
+			report, err := orch.DeepAnalysis(ctx, code, orchestrator.ProgressFunc(reportProgress))
+			if err != nil {
+				return "", err
+			}
+			data, _ := json.Marshal(report)
+			return string(data), nil
+		})
+
+		WriteTaskAccepted(c, taskID)
 	})
+
+	// ====== 量化分析 API ======
+	quantHandler := NewQuantHandler(cachedDS, fundRepo)
+	quantHandler.RegisterRoutes(v1)
+
+	// 注册量化 Agent 工具
+	quantLoader := &quantDataLoaderAdapter{ds: cachedDS}
+	toolRegistry.Register(agent.NewBacktestPortfolioTool(quantLoader))
+	toolRegistry.Register(agent.NewSimulateDCATool(quantLoader))
+	toolRegistry.Register(agent.NewCompareFundsTool(quantLoader))
 
 	// ====== Agent ======
 	fundAgent := agent.NewFundAgent(agentClient, toolRegistry)
@@ -127,19 +161,33 @@ func SetupRouter(cfg *config.Config, db *sql.DB) *SetupResult {
 	chatHandler := NewChatHandler(fundAgent, sessionManager, memStore, memExtractor)
 	chatHandler.RegisterRoutes(v1)
 
-	newsHandler := NewNewsHandler(rssStore)
-	newsHandler.RegisterRoutes(v1)
-
-	registerBriefsAPI(v1, db)
+	// ====== 简报任务（API + 调度器共用） ======
+	briefTask := scheduler.NewDailyBriefTask(
+		agentClient, toolRegistry, memStore,
+		func(ctx context.Context, brief string) error {
+			logger.Info("每日投资简报已生成", zap.Int("length", len(brief)))
+			if db != nil {
+				_, err := db.Exec(`INSERT INTO briefs (content, type) VALUES (?, 'daily')`, brief)
+				if err != nil {
+					logger.Error("保存简报失败", zap.Error(err))
+				}
+			}
+			return nil
+		},
+	)
+	registerBriefsAPI(v1, db, briefTask)
 
 	// ====== 定时调度器 ======
-	sched := createScheduler(agentClient, toolRegistry, memStore, db)
+	sched := createScheduler(briefTask, agentClient, toolRegistry, memStore)
 	sched.Start()
 
 	// ====== RSS 抓取调度器 ======
 	if cfg.RSS.Enabled && len(cfg.RSS.Feeds) > 0 {
 		rssScheduler = createRSSScheduler(cfg, rssStore, agentClient)
 	}
+
+	newsHandler := NewNewsHandler(rssStore, rssScheduler)
+	newsHandler.RegisterRoutes(v1)
 
 	logger.Info("路由初始化完成",
 		zap.String("llm_base_url", cfg.LLM.BaseURL),
@@ -362,7 +410,7 @@ func registerPortfolioAPI(v1 *gin.RouterGroup, memStore *memory.Store, scanner *
 }
 
 // registerBriefsAPI 注册简报 API
-func registerBriefsAPI(v1 *gin.RouterGroup, db *sql.DB) {
+func registerBriefsAPI(v1 *gin.RouterGroup, db *sql.DB, briefTask *scheduler.DailyBriefTask) {
 	v1.GET("/briefs", func(c *gin.Context) {
 		if db == nil {
 			c.JSON(http.StatusOK, gin.H{"data": []any{}, "total": 0})
@@ -393,26 +441,28 @@ func registerBriefsAPI(v1 *gin.RouterGroup, db *sql.DB) {
 		}
 		c.JSON(http.StatusOK, gin.H{"data": briefs, "total": len(briefs)})
 	})
+
+	// 手动生成简报
+	v1.POST("/briefs/generate", func(c *gin.Context) {
+		if briefTask == nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "简报任务未初始化"})
+			return
+		}
+		go func() {
+			if err := briefTask.Run(context.Background()); err != nil {
+				logger.Error("手动生成简报失败", zap.Error(err))
+			}
+		}()
+		c.JSON(http.StatusOK, gin.H{"status": "generating", "message": "简报生成中，请稍后刷新"})
+	})
 }
 
 // createScheduler 创建定时任务调度器
-func createScheduler(llmClient llm.Client, tools *agent.ToolRegistry, memStore *memory.Store, db *sql.DB) *scheduler.Scheduler {
+func createScheduler(briefTask *scheduler.DailyBriefTask, llmClient llm.Client, tools *agent.ToolRegistry, memStore *memory.Store) *scheduler.Scheduler {
 	sched := scheduler.New()
 
 	// 每日投资简报（每 12 小时）
-	sched.Register(scheduler.NewDailyBriefTask(
-		llmClient, tools, memStore,
-		func(ctx context.Context, brief string) error {
-			logger.Info("每日投资简报已生成", zap.Int("length", len(brief)))
-			if db != nil {
-				_, err := db.Exec(`INSERT INTO briefs (content, type) VALUES (?, 'daily')`, brief)
-				if err != nil {
-					logger.Error("保存简报失败", zap.Error(err))
-				}
-			}
-			return nil
-		},
-	), 12*time.Hour)
+	sched.Register(briefTask, 12*time.Hour)
 
 	// 净值异动监控（每 4 小时）
 	sched.Register(scheduler.NewNAVMonitorTask(
@@ -504,6 +554,54 @@ func (a *eastmoneyRankingAdapter) GetFundRanking(ctx context.Context, sortType s
 		}
 	}
 	return out, nil
+}
+
+// ====== 调仓检测适配器 ======
+
+// rebalanceAdapter 适配 analyzer.FundAnalyzer → agent.rebalanceDetector
+type rebalanceAdapter struct {
+	analyzer analyzer.FundAnalyzer
+}
+
+func (a *rebalanceAdapter) DetectRebalance(ctx context.Context, code string) (string, error) {
+	result, err := a.analyzer.DetectRebalance(ctx, code)
+	if err != nil {
+		return "", err
+	}
+	data, _ := json.MarshalIndent(result, "", "  ")
+	return string(data), nil
+}
+
+// ====== 量化数据加载适配器 ======
+
+// quantDataLoaderAdapter 适配 datasource.FundDataSource → agent.QuantDataLoader
+type quantDataLoaderAdapter struct {
+	ds datasource.FundDataSource
+}
+
+func (a *quantDataLoaderAdapter) LoadNAVSeries(ctx context.Context, code string, days int) (*quant.NavSeries, error) {
+	navList, err := a.ds.GetFundNAV(ctx, code, days)
+	if err != nil {
+		return nil, err
+	}
+	// 数据源返回按日期降序，转换为升序
+	points := make([]quant.NavPoint, len(navList))
+	for i, nav := range navList {
+		points[len(navList)-1-i] = quant.NavPoint{
+			Date:   nav.Date,
+			NAV:    nav.UnitNAV,
+			AccNAV: nav.AccumNAV,
+		}
+	}
+	return &quant.NavSeries{FundCode: code, Points: points}, nil
+}
+
+func (a *quantDataLoaderAdapter) GetFundName(ctx context.Context, code string) string {
+	fund, err := a.ds.GetFundInfo(ctx, code)
+	if err != nil {
+		return code
+	}
+	return fund.Name
 }
 
 // ====== 通用处理器 ======
