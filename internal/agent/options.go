@@ -14,7 +14,7 @@ type Options struct {
 // DefaultOptions 默认配置
 func DefaultOptions() *Options {
 	return &Options{
-		Model:       llm.ModelClaudeSonnet45,
+		Model:       llm.ModelGemini3ProHigh,
 		MaxTokens:   4096,
 		Temperature: 0.7,
 		SystemPrompt: "",

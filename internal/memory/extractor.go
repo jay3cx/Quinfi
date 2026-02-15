@@ -46,11 +46,11 @@ type Extractor struct {
 	model  llm.ModelID
 }
 
-// NewExtractor 创建记忆提取器（默认使用 Claude Sonnet）
+// NewExtractor 创建记忆提取器（默认使用 Gemini 3 Pro）
 func NewExtractor(client llm.Client) *Extractor {
 	return &Extractor{
 		client: client,
-		model:  llm.ModelClaudeSonnet45,
+		model:  llm.ModelGemini3ProHigh,
 	}
 }
 
