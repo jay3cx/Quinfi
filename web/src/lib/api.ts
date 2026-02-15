@@ -1,5 +1,5 @@
 // API 封装层
-import type { Fund, NAV, Holding, Article, Feed, ScanResponse } from "@/types"
+import type { Fund, NAV, Holding, Article, Feed, ScanResponse, DeepReport, TaskInfo, HoldingWeight, BacktestResult, DCAResult, CompareResult } from "@/types"
 
 const API_BASE = "/api/v1"
 
@@ -41,6 +41,21 @@ export const getNewsDetail = (guid: string) =>
 
 export const getFeeds = () =>
   apiFetch<{ data: Feed[]; total: number }>("/feeds")
+
+// RSS 调度器控制
+export const getRSSStatus = () =>
+  apiFetch<{ running: boolean; feed_count: number; enabled: boolean }>("/rss/status")
+
+export const toggleRSS = (enabled: boolean) =>
+  fetch(`${API_BASE}/rss/toggle`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ enabled }),
+  }).then(async (res) => {
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || "操作失败")
+    return data as { running: boolean; message: string }
+  })
 
 // 会话
 export interface SessionInfo {
@@ -115,3 +130,128 @@ export interface Brief {
 
 export const getBriefs = () =>
   apiFetch<{ data: Brief[]; total: number }>("/briefs")
+
+export const generateBrief = () =>
+  fetch(`${API_BASE}/briefs/generate`, { method: "POST" }).then(async (res) => {
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || "生成失败")
+    return data as { status: string; message: string }
+  })
+
+// 深度分析（异步任务）
+export const submitDeepAnalysis = (code: string) =>
+  fetch(`${API_BASE}/analysis/deep`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ code }),
+  }).then(async (res) => {
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || "提交分析失败")
+    return data as { task_id: string; status: string; stream: string }
+  })
+
+// 任务查询
+export const getTask = (id: string) =>
+  apiFetch<TaskInfo>(`/tasks/${id}`)
+
+// 任务进度 SSE 流
+export const streamTaskProgress = (
+  taskId: string,
+  callbacks: {
+    onProgress?: (progress: number, msg: string, metadata?: string) => void
+    onComplete?: (result: string) => void
+    onError?: (error: string) => void
+  }
+) => {
+  const es = new EventSource(`${API_BASE}/tasks/${taskId}/stream`)
+
+  es.onmessage = (event) => {
+    if (event.data === "[DONE]") {
+      es.close()
+      return
+    }
+    try {
+      const update = JSON.parse(event.data) as {
+        status: string
+        progress: number
+        progress_msg?: string
+        metadata?: string
+        result?: string
+        error?: string
+        done?: boolean
+      }
+
+      if (update.status === "failed" && update.error) {
+        callbacks.onError?.(update.error)
+        es.close()
+        return
+      }
+
+      callbacks.onProgress?.(update.progress, update.progress_msg || "", update.metadata)
+
+      if (update.done && update.result) {
+        callbacks.onComplete?.(update.result)
+        es.close()
+      }
+    } catch { /* ignore parse errors */ }
+  }
+
+  es.onerror = () => {
+    es.close()
+    // SSE 断线降级为轮询
+    const poll = setInterval(async () => {
+      try {
+        const task = await getTask(taskId)
+        callbacks.onProgress?.(task.progress, task.progress_msg || "")
+        if (task.status === "completed" && task.result) {
+          callbacks.onComplete?.(task.result)
+          clearInterval(poll)
+        } else if (task.status === "failed") {
+          callbacks.onError?.(task.error || "任务失败")
+          clearInterval(poll)
+        }
+      } catch {
+        clearInterval(poll)
+        callbacks.onError?.("查询任务状态失败")
+      }
+    }, 3000)
+  }
+
+  return () => es.close()
+}
+
+// ====== 量化分析 ======
+
+async function apiPost<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }))
+    throw new Error(err.error || "Request failed")
+  }
+  return res.json()
+}
+
+export const runBacktest = (holdings: HoldingWeight[], days = 365, opts?: { initial_cash?: number; rebalance?: string; benchmark?: string }) =>
+  apiPost<BacktestResult>("/quant/backtest", { holdings, days, ...opts })
+
+export const runDCA = (fund_code: string, amount: number, opts?: { strategy?: string; frequency?: string; days?: number }) =>
+  apiPost<DCAResult>("/quant/dca", { fund_code, amount, ...opts })
+
+export const runCompare = (fund_codes: string[], opts?: { period?: string; days?: number }) =>
+  apiPost<CompareResult>("/quant/compare", { fund_codes, ...opts })
+
+/** @deprecated 使用 submitDeepAnalysis + streamTaskProgress */
+export const deepAnalysis = (code: string) =>
+  fetch(`${API_BASE}/analysis/deep`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ code }),
+  }).then(async (res) => {
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || "深度分析失败")
+    return data as DeepReport
+  })
