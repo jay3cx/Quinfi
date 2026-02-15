@@ -30,3 +30,35 @@ type AnalysisReport struct {
 type AnalyzeOptions struct {
 	ForceRefresh bool // 强制刷新，忽略缓存
 }
+
+// ManagerAnalyzer 基金经理分析器接口
+type ManagerAnalyzer interface {
+	// AnalyzeManager 分析基金经理能力
+	AnalyzeManager(ctx context.Context, code string) (*ManagerReport, error)
+}
+
+// ManagerReport 基金经理分析报告
+type ManagerReport struct {
+	ManagerName     string   `json:"manager_name"`
+	Years           float64  `json:"years"`
+	Style           string   `json:"style"`            // 投资风格
+	Strengths       []string `json:"strengths"`         // 优势
+	Weaknesses      []string `json:"weaknesses"`        // 劣势
+	BestPerformance string   `json:"best_performance"`  // 最佳业绩
+	AnalysisText    string   `json:"analysis_text"`     // 综合分析
+}
+
+// MacroAnalyzer 宏观环境分析器接口
+type MacroAnalyzer interface {
+	// AnalyzeMacro 基于新闻分析宏观环境对基金的影响
+	AnalyzeMacro(ctx context.Context, fundName string, news []string) (*MacroReport, error)
+}
+
+// MacroReport 宏观研判报告
+type MacroReport struct {
+	MarketSentiment string   `json:"market_sentiment"` // 市场情绪：乐观/中性/悲观
+	KeyEvents       []string `json:"key_events"`       // 关键宏观事件
+	Impact          string   `json:"impact"`           // 对目标基金的影响分析
+	RiskFactors     []string `json:"risk_factors"`     // 宏观风险因素
+	AnalysisText    string   `json:"analysis_text"`    // 综合分析
+}
