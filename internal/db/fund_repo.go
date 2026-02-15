@@ -48,6 +48,29 @@ func (r *FundRepository) SaveNAVHistory(ctx context.Context, code string, navLis
 	return tx.Commit()
 }
 
+// GetNAVHistory 查询指定日期范围的净值历史（按日期升序）
+func (r *FundRepository) GetNAVHistory(ctx context.Context, code, startDate, endDate string) ([]datasource.NAV, error) {
+	rows, err := r.db.QueryContext(ctx,
+		`SELECT date, unit_nav, accum_nav, daily_return
+		 FROM nav_history
+		 WHERE fund_code = ? AND date >= ? AND date <= ?
+		 ORDER BY date ASC`, code, startDate, endDate)
+	if err != nil {
+		return nil, fmt.Errorf("查询净值历史失败: %w", err)
+	}
+	defer rows.Close()
+
+	var navList []datasource.NAV
+	for rows.Next() {
+		var nav datasource.NAV
+		if err := rows.Scan(&nav.Date, &nav.UnitNAV, &nav.AccumNAV, &nav.DailyReturn); err != nil {
+			return nil, fmt.Errorf("扫描净值数据失败: %w", err)
+		}
+		navList = append(navList, nav)
+	}
+	return navList, rows.Err()
+}
+
 // SaveHoldingsSnapshot 保存持仓快照
 func (r *FundRepository) SaveHoldingsSnapshot(ctx context.Context, code, quarter string, holdings []datasource.Holding) error {
 	tx, err := r.db.BeginTx(ctx, nil)
@@ -119,7 +142,7 @@ func GetPreviousQuarter(current string) string {
 		return ""
 	}
 	year := current[:4]
-	q := current[5:]
+	q := current[4:]
 	switch q {
 	case "Q1":
 		y := atoi(year) - 1
