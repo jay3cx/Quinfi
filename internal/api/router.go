@@ -14,6 +14,7 @@ import (
 	"github.com/jay3cx/fundmind/internal/datasource"
 	"github.com/jay3cx/fundmind/internal/datasource/eastmoney"
 	"github.com/jay3cx/fundmind/internal/analyzer"
+	funddb "github.com/jay3cx/fundmind/internal/db"
 	"github.com/jay3cx/fundmind/internal/debate"
 	"github.com/jay3cx/fundmind/internal/memory"
 	"github.com/jay3cx/fundmind/internal/orchestrator"
@@ -78,9 +79,13 @@ func SetupRouter(cfg *config.Config, db *sql.DB) *SetupResult {
 	toolRegistry.Register(agent.NewRunDebateTool(debateAdapter))
 
 	// ====== Orchestrator（深度分析） ======
+	var fundRepo *funddb.FundRepository
+	if db != nil {
+		fundRepo = funddb.NewFundRepository(db)
+	}
 	managerAnalyzer := analyzer.NewManagerAnalyzer(cachedDS, agentClient)
 	macroAnalyzer := analyzer.NewMacroAnalyzer(agentClient)
-	fundAnalyzer := analyzer.NewFundAnalyzer(cachedDS, agentClient)
+	fundAnalyzer := analyzer.NewFundAnalyzer(cachedDS, agentClient, fundRepo)
 
 	orch := orchestrator.NewOrchestrator(
 		fundAnalyzer, managerAnalyzer, macroAnalyzer,

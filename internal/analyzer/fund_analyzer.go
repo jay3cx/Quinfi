@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/jay3cx/fundmind/internal/datasource"
+	"github.com/jay3cx/fundmind/internal/db"
 	"github.com/jay3cx/fundmind/pkg/llm"
 	"github.com/jay3cx/fundmind/pkg/logger"
 	"go.uber.org/zap"
@@ -20,6 +21,7 @@ type DefaultAnalyzer struct {
 	dataSource datasource.FundDataSource
 	llmClient  llm.Client
 	cache      *AnalysisCache
+	repo       *db.FundRepository // 用于历史数据查询
 }
 
 // AnalysisCache 分析结果缓存
@@ -71,11 +73,12 @@ func (c *AnalysisCache) Set(code string, report *AnalysisReport) {
 }
 
 // NewFundAnalyzer 创建基金分析器
-func NewFundAnalyzer(ds datasource.FundDataSource, client llm.Client) *DefaultAnalyzer {
+func NewFundAnalyzer(ds datasource.FundDataSource, client llm.Client, repo *db.FundRepository) *DefaultAnalyzer {
 	return &DefaultAnalyzer{
 		dataSource: ds,
 		llmClient:  client,
 		cache:      NewAnalysisCache(1 * time.Hour),
+		repo:       repo,
 	}
 }
 
@@ -204,14 +207,37 @@ func (a *DefaultAnalyzer) DetectRebalance(ctx context.Context, code string) (*Re
 		return nil, fmt.Errorf("获取持仓数据失败: %w", err)
 	}
 
-	// 注意：实际场景需要获取历史持仓数据
-	// 这里使用当前持仓模拟，实际应从数据库或缓存获取上期数据
-	prevHoldings := currHoldings // 临时使用当前持仓作为上期数据
+	// 从 DB 获取上期持仓
+	var prevHoldings []datasource.Holding
+	prevDate := "上期"
+
+	if a.repo != nil {
+		currQ := db.CurrentQuarter()
+		prevQ := db.GetPreviousQuarter(currQ)
+		if prevQ != "" {
+			if prev, err := a.repo.GetHoldingsSnapshot(ctx, code, prevQ); err == nil && len(prev) > 0 {
+				prevHoldings = prev
+				prevDate = prevQ
+			}
+		}
+	}
+
+	// 如果无历史数据，降级为当前数据（保持原行为）
+	if len(prevHoldings) == 0 {
+		prevHoldings = currHoldings
+		prevDate = "上期(无历史数据)"
+	}
+
+	// 保存当前持仓快照
+	if a.repo != nil {
+		currQ := db.CurrentQuarter()
+		_ = a.repo.SaveHoldingsSnapshot(ctx, code, currQ, currHoldings)
+	}
 
 	data := RebalanceData{
 		FundCode:     code,
 		FundName:     fund.Name,
-		PrevDate:     "上期",
+		PrevDate:     prevDate,
 		CurrDate:     time.Now().Format("2006-01-02"),
 		PrevHoldings: prevHoldings,
 		CurrHoldings: currHoldings,
