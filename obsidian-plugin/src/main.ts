@@ -1,9 +1,9 @@
 import { App, Modal, Notice, Plugin } from "obsidian";
 import { FundAnalysisView, VIEW_TYPE_FUND_ANALYSIS } from "./view";
 
-export default class FundMindPlugin extends Plugin {
+export default class QuinfiPlugin extends Plugin {
   async onload(): Promise<void> {
-    console.log("FundMind 插件加载中...");
+    console.log("Quinfi 插件加载中...");
 
     // 注册侧边栏视图
     this.registerView(VIEW_TYPE_FUND_ANALYSIS, (leaf) => new FundAnalysisView(leaf));
@@ -28,11 +28,11 @@ export default class FundMindPlugin extends Plugin {
       },
     });
 
-    console.log("FundMind 插件加载完成");
+    console.log("Quinfi 插件加载完成");
   }
 
   async onunload(): Promise<void> {
-    console.log("FundMind 插件卸载");
+    console.log("Quinfi 插件卸载");
     this.app.workspace.detachLeavesOfType(VIEW_TYPE_FUND_ANALYSIS);
   }
 

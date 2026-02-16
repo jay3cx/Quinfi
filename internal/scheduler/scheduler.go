@@ -1,5 +1,5 @@
 // Package scheduler 提供定时任务调度器
-// 让小基能后台自主运行，定时执行研究和监控任务
+// 让 Quinfi 能后台自主运行，定时执行研究和监控任务
 package scheduler
 
 import (
@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jay3cx/fundmind/pkg/logger"
+	"github.com/jay3cx/Quinfi/pkg/logger"
 	"go.uber.org/zap"
 )
 

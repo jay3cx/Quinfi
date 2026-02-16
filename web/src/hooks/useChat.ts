@@ -7,6 +7,8 @@ export interface ChatCallbacks {
   onChunk: (content: string) => void
   onToolStart?: (toolName: string, text: string) => void
   onToolResult?: (toolName: string, text: string) => void
+  onThinking?: (text: string) => void
+  onDebatePhase?: (content: string) => void
   onSessionId?: (sessionId: string) => void
   onDone: () => void
   onError: (err: string) => void
@@ -120,6 +122,7 @@ export function useChat() {
 
         const decoder = new TextDecoder()
         let buffer = ""
+        let receivedDone = false
 
         while (true) {
           const { done, value } = await reader.read()
@@ -137,6 +140,7 @@ export function useChat() {
             const dataStr = line.slice(6).trim()
 
             if (dataStr === "[DONE]") {
+              receivedDone = true
               callbacks.onDone()
               continue
             }
@@ -166,18 +170,26 @@ export function useChat() {
                     event.content || ""
                   )
                   break
+                case "thinking":
+                  callbacks.onThinking?.(event.content || "")
+                  break
+                case "debate_phase":
+                  callbacks.onDebatePhase?.(event.content || "")
+                  break
                 case "text":
                 default:
                   if (event.content) callbacks.onChunk(event.content)
               }
             } catch {
-              // 非 JSON 数据，跳过
+              // 非 JSON 数据（如 SSE 注释心跳），跳过
             }
           }
         }
 
-        // 流正常结束
-        callbacks.onDone()
+        // 流正常结束，避免重复调用 onDone
+        if (!receivedDone) {
+          callbacks.onDone()
+        }
       } catch (err: unknown) {
         if (err instanceof Error && err.name === "AbortError") {
           // 如果是超时触发的 abort，status 已被设为 error，不覆盖

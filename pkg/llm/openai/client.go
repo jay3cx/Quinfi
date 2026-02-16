@@ -6,14 +6,14 @@ import (
 	"errors"
 	"io"
 
-	"github.com/jay3cx/fundmind/pkg/llm"
-	"github.com/jay3cx/fundmind/pkg/logger"
+	"github.com/jay3cx/Quinfi/pkg/llm"
+	"github.com/jay3cx/Quinfi/pkg/logger"
 	openai "github.com/sashabaranov/go-openai"
 	"go.uber.org/zap"
 )
 
 const (
-	defaultBaseURL = "http://127.0.0.1:8045/v1"
+	defaultBaseURL = "http://localhost:8317/v1"
 )
 
 // Client OpenAI 兼容协议客户端实现（支持 Function Calling）
@@ -98,7 +98,11 @@ func (c *Client) Chat(ctx context.Context, req *llm.ChatRequest) (*llm.ChatRespo
 	return result, nil
 }
 
-// ChatStream 流式对话调用
+// ChatStream 流式对话调用（支持工具调用）
+//
+// 工作模式：
+// - 文本响应：逐 token 推送 Content chunk
+// - 工具调用：累积流式增量，流结束时通过 ToolCalls chunk 一次性返回完整工具调用
 func (c *Client) ChatStream(ctx context.Context, req *llm.ChatRequest) (<-chan llm.StreamChunk, error) {
 	messages := convertMessages(req.Messages)
 
@@ -110,7 +114,11 @@ func (c *Client) ChatStream(ctx context.Context, req *llm.ChatRequest) (<-chan l
 		Stream:      true,
 	}
 
-	// 流式模式不传工具定义（工具轮次使用同步调用）
+	// 传递工具定义（如果有），支持流式工具调用
+	if len(req.Tools) > 0 {
+		openaiReq.Tools = convertTools(req.Tools)
+	}
+
 	stream, err := c.client.CreateChatCompletionStream(ctx, openaiReq)
 	if err != nil {
 		return nil, err
@@ -122,9 +130,29 @@ func (c *Client) ChatStream(ctx context.Context, req *llm.ChatRequest) (<-chan l
 		defer close(ch)
 		defer stream.Close()
 
+		// 累积流式工具调用增量：index → {id, name, arguments}
+		type toolCallAcc struct {
+			ID        string
+			Name      string
+			Arguments string
+		}
+		toolCallMap := make(map[int]*toolCallAcc)
+
 		for {
 			response, err := stream.Recv()
 			if errors.Is(err, io.EOF) {
+				// 流结束：如果有累积的工具调用，发送 ToolCalls chunk
+				if len(toolCallMap) > 0 {
+					toolCalls := make([]llm.ToolCall, 0, len(toolCallMap))
+					for _, acc := range toolCallMap {
+						toolCalls = append(toolCalls, llm.ToolCall{
+							ID:        acc.ID,
+							Name:      acc.Name,
+							Arguments: acc.Arguments,
+						})
+					}
+					ch <- llm.StreamChunk{ToolCalls: toolCalls}
+				}
 				ch <- llm.StreamChunk{Done: true}
 				return
 			}
@@ -133,10 +161,36 @@ func (c *Client) ChatStream(ctx context.Context, req *llm.ChatRequest) (<-chan l
 				return
 			}
 
-			if len(response.Choices) > 0 {
-				ch <- llm.StreamChunk{
-					Content: response.Choices[0].Delta.Content,
-					Done:    false,
+			if len(response.Choices) == 0 {
+				continue
+			}
+
+			delta := response.Choices[0].Delta
+
+			// 处理文本内容增量
+			if delta.Content != "" {
+				ch <- llm.StreamChunk{Content: delta.Content}
+			}
+
+			// 处理工具调用增量
+			for _, tc := range delta.ToolCalls {
+				idx := 0
+				if tc.Index != nil {
+					idx = *tc.Index
+				}
+				acc, ok := toolCallMap[idx]
+				if !ok {
+					acc = &toolCallAcc{}
+					toolCallMap[idx] = acc
+				}
+				if tc.ID != "" {
+					acc.ID = tc.ID
+				}
+				if tc.Function.Name != "" {
+					acc.Name = tc.Function.Name
+				}
+				if tc.Function.Arguments != "" {
+					acc.Arguments += tc.Function.Arguments
 				}
 			}
 		}

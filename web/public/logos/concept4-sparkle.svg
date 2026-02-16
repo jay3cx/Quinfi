@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img">
+  <title>Quinfi - Sparkle</title>
+  <!-- Gemini-style smooth 4-pointed star, top point slightly elongated for "growth" -->
+  <path d="M256,40 C270,176 336,242 472,256 C336,270 270,336 256,472 C242,336 176,270 40,256 C176,242 242,176 256,40Z"
+        fill="#C96442"/>
+</svg>

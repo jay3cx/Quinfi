@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img">
+  <title>Quinfi - Triskelion</title>
+  <defs>
+    <!-- Single spiral arm curving outward from center -->
+    <path id="arm8" d="M256,256 C256,188 280,132 332,108 C384,84 432,108 440,168"/>
+  </defs>
+  <g fill="none" stroke="#C96442" stroke-width="42" stroke-linecap="round">
+    <use href="#arm8"/>
+    <use href="#arm8" transform="rotate(120, 256, 256)"/>
+    <use href="#arm8" transform="rotate(240, 256, 256)"/>
+  </g>
+  <!-- Center dot -->
+  <circle cx="256" cy="256" r="30" fill="#C96442"/>
+</svg>

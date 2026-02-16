@@ -7,15 +7,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jay3cx/fundmind/internal/agent"
-	"github.com/jay3cx/fundmind/internal/memory"
-	"github.com/jay3cx/fundmind/pkg/llm"
-	"github.com/jay3cx/fundmind/pkg/logger"
+	"github.com/jay3cx/Quinfi/internal/agent"
+	"github.com/jay3cx/Quinfi/internal/memory"
+	"github.com/jay3cx/Quinfi/pkg/llm"
+	"github.com/jay3cx/Quinfi/pkg/logger"
 	"go.uber.org/zap"
 )
 
 // DailyBriefTask 每日投资简报生成任务
-// 小基自主执行：扫描持仓净值 + 相关资讯 + 市场概况 → 生成简报
+// Quinfi 自主执行：扫描持仓净值 + 相关资讯 + 市场概况 → 生成简报
 type DailyBriefTask struct {
 	client      llm.Client
 	tools       *agent.ToolRegistry
@@ -75,8 +75,8 @@ func (t *DailyBriefTask) Run(ctx context.Context) error {
 		return nil
 	}
 
-	// 2. 让小基生成简报
-	briefPrompt := fmt.Sprintf(`你是首席投研官小基。请基于以下数据生成今日投资简报。
+	// 2. 让 Quinfi 生成简报
+	briefPrompt := fmt.Sprintf(`你是首席投研官 Quinfi。请基于以下数据生成今日投资简报。
 
 %s
 
@@ -101,9 +101,9 @@ func (t *DailyBriefTask) Run(ctx context.Context) error {
 - 表格内换行使用 HTML <br> 标签`, data, time.Now().Format("2006-01-02"))
 
 	resp, err := t.client.Chat(ctx, &llm.ChatRequest{
-		Model:       llm.ModelGemini3ProHigh,
+		Model:       llm.ModelGLM5,
 		Messages:    []llm.Message{{Role: llm.RoleUser, Content: briefPrompt}},
-		MaxTokens:   2048,
+		MaxTokens:   0, // 不限制，由模型自行决定
 		Temperature: 0.3,
 	})
 	if err != nil {

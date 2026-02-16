@@ -9,10 +9,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jay3cx/fundmind/internal/datasource"
-	"github.com/jay3cx/fundmind/internal/db"
-	"github.com/jay3cx/fundmind/pkg/llm"
-	"github.com/jay3cx/fundmind/pkg/logger"
+	"github.com/jay3cx/Quinfi/internal/datasource"
+	"github.com/jay3cx/Quinfi/internal/db"
+	"github.com/jay3cx/Quinfi/pkg/llm"
+	"github.com/jay3cx/Quinfi/pkg/logger"
 	"go.uber.org/zap"
 )
 
@@ -128,7 +128,7 @@ func (a *DefaultAnalyzer) Analyze(ctx context.Context, code string, forceRefresh
 		Messages: []llm.Message{
 			{Role: llm.RoleUser, Content: prompt},
 		},
-		MaxTokens:   4096,
+		MaxTokens:   0,
 		Temperature: 0.3,
 	})
 	if err != nil {
@@ -177,7 +177,7 @@ func (a *DefaultAnalyzer) AnalyzeHoldings(ctx context.Context, code string) (*Ho
 		Messages: []llm.Message{
 			{Role: llm.RoleUser, Content: prompt},
 		},
-		MaxTokens:   2048,
+		MaxTokens:   0,
 		Temperature: 0.3,
 	})
 	if err != nil {
@@ -253,7 +253,7 @@ func (a *DefaultAnalyzer) DetectRebalance(ctx context.Context, code string) (*Re
 		Messages: []llm.Message{
 			{Role: llm.RoleUser, Content: prompt},
 		},
-		MaxTokens:   2048,
+		MaxTokens:   0,
 		Temperature: 0.3,
 	})
 	if err != nil {

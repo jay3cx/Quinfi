@@ -8,7 +8,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/jay3cx/fundmind/internal/datasource"
+	"github.com/jay3cx/Quinfi/internal/datasource"
 )
 
 // FundNote 基金笔记数据

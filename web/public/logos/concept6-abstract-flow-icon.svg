@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img">
+  <title>Quinfi Icon - Abstract Flow</title>
+  <rect width="512" height="512" rx="112" fill="#C96442"/>
+  <g fill="none" stroke="white" stroke-width="36" stroke-linecap="round">
+    <path d="M144,296 C144,168 220,96 296,96 C372,96 408,156 408,216"/>
+    <path d="M368,216 C368,344 292,416 216,416 C140,416 104,356 104,296"/>
+    <path d="M168,376 C228,316 284,196 344,136"/>
+  </g>
+</svg>

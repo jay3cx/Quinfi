@@ -171,15 +171,29 @@ export interface DebateResult {
   bull_rebuttal: DebateArgument | null
   bear_rebuttal: DebateArgument | null
   verdict: DebateVerdict | null
+  system_confidence?: number
+  decision_gate?: "pass" | "review" | "degrade" | "unknown"
+  confidence_reasons?: string[]
+  review_attempted?: boolean
   formatted: string  // Markdown 兜底
 }
+
+export type DebatePhaseKey =
+  | "data_gather"
+  | "bull_case"
+  | "bear_case"
+  | "bull_rebuttal"
+  | "bear_rebuttal"
+  | "judge_verdict"
 
 // SSE 辩论阶段更新
 export interface DebatePhaseUpdate {
   type: "debate_phase"
-  phase: string
+  phase: DebatePhaseKey | "confidence_gate"
   argument?: DebateArgument
   verdict?: DebateVerdict
+  system_confidence?: number
+  decision_gate?: "pass" | "review" | "degrade" | "unknown"
 }
 
 // 异步任务
@@ -221,12 +235,9 @@ export interface HoldingWeight {
 }
 
 export interface FundMetricRow {
-  code: string
-  name: string
+  fund_code: string
+  weight: number
   total_return: number
-  annual_return: number
-  max_drawdown: number
-  sharpe_ratio: number
 }
 
 export interface BacktestResult {
@@ -237,7 +248,7 @@ export interface BacktestResult {
   volatility: number
   sortino_ratio: number
   calmar_ratio: number
-  nav_curve: CurvePoint[]
+  equity_curve: CurvePoint[]
   drawdown_curve: CurvePoint[]
   fund_metrics: FundMetricRow[]
   benchmark_return?: number

@@ -8,13 +8,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jay3cx/fundmind/pkg/llm"
-	"github.com/jay3cx/fundmind/pkg/logger"
+	"github.com/jay3cx/Quinfi/pkg/llm"
+	"github.com/jay3cx/Quinfi/pkg/logger"
 	"go.uber.org/zap"
 )
 
 const (
-	maxToolRounds = 8  // 最大工具调用轮次，防止死循环
+	maxToolRounds = 25 // 最大工具调用轮次，防止死循环
 	maxHistoryLen = 20 // 保留最近 N 条历史消息
 )
 
@@ -36,13 +36,13 @@ type FundAgent struct {
 func NewFundAgent(client llm.Client, tools *ToolRegistry, opts ...Option) *FundAgent {
 	options := ApplyOptions(opts...)
 
-	// 如果没有指定系统提示词，使用默认的小基提示词
+	// 如果没有指定系统提示词，使用默认的 Quinfi 提示词
 	if options.SystemPrompt == "" {
-		options.SystemPrompt = SystemPromptXiaoJi
+		options.SystemPrompt = SystemPromptQuinfi
 	}
 
 	return &FundAgent{
-		name:    "小基",
+		name:    "Quinfi",
 		client:  client,
 		tools:   tools,
 		options: options,
@@ -131,9 +131,9 @@ func (a *FundAgent) Run(ctx context.Context, input *AgentInput) (*AgentResponse,
 // RunStream 流式执行（ReAct 循环）
 //
 // 策略：
-// - 工具调用轮次使用同步 Chat()（需要完整结果才能追加到消息序列）
-// - 最终响应直接输出同步结果（避免双重调用 LLM 浪费 tokens）
-// - 如果需要真流式体验，可在最后一轮用 ChatStream（但不重复请求）
+// - 所有轮次使用 ChatStream() 实现真正的 token-by-token 流式输出
+// - 文本响应：直接转发 LLM 流式 chunk 给前端（真流式）
+// - 工具调用：流式累积工具名+参数 → 执行 → 继续下一轮
 func (a *FundAgent) RunStream(ctx context.Context, input *AgentInput) (<-chan StreamChunk, error) {
 	logger.Info("FundAgent 开始流式执行",
 		zap.String("query", input.Query),
@@ -149,7 +149,8 @@ func (a *FundAgent) RunStream(ctx context.Context, input *AgentInput) (<-chan St
 
 		// ReAct 循环
 		for round := 0; round < maxToolRounds; round++ {
-			resp, err := a.client.Chat(ctx, &llm.ChatRequest{
+			// 使用 ChatStream 获取真流式响应
+			streamCh, err := a.client.ChatStream(ctx, &llm.ChatRequest{
 				Model:       a.options.Model,
 				Messages:    messages,
 				MaxTokens:   a.options.MaxTokens,
@@ -157,28 +158,59 @@ func (a *FundAgent) RunStream(ctx context.Context, input *AgentInput) (<-chan St
 				Tools:       a.tools.ToLLMTools(),
 			})
 			if err != nil {
-				chunks <- StreamChunk{Error: fmt.Errorf("LLM 调用失败: %w", err), Done: true}
+				chunks <- StreamChunk{Error: fmt.Errorf("LLM 流式调用失败: %w", err), Done: true}
 				return
 			}
 
-			// 没有工具调用 → 直接输出已有响应（不再重复调用 LLM）
-			if !resp.HasToolCalls() {
-				if resp.Content != "" {
-					// 将同步结果分块推送，模拟流式体验
-					a.emitContentChunks(chunks, resp.Content)
+			// 消费流式 chunks，累积完整内容和工具调用
+			var fullContent string
+			var toolCalls []llm.ToolCall
+
+			for chunk := range streamCh {
+				if chunk.Error != nil {
+					chunks <- StreamChunk{Error: fmt.Errorf("LLM 流式错误: %w", chunk.Error), Done: true}
+					return
 				}
+
+				// 文本内容：直接转发给前端（真流式！）
+				if chunk.Content != "" {
+					fullContent += chunk.Content
+					chunks <- StreamChunk{Type: ChunkText, Content: chunk.Content}
+				}
+
+				// 工具调用（流结束时由 ChatStream 汇总返回）
+				if len(chunk.ToolCalls) > 0 {
+					toolCalls = chunk.ToolCalls
+				}
+
+				if chunk.Done {
+					break
+				}
+			}
+
+			// 判断本轮结果
+			if len(toolCalls) == 0 {
+				// 没有工具调用 → 最终响应，已经流式输出给前端
+				logger.Info("FundAgent 流式执行完成",
+					zap.Int("rounds", round+1),
+				)
 				chunks <- StreamChunk{Done: true}
 				return
 			}
 
 			// 有工具调用 → 执行工具，推送中间状态
+			logger.Info("FundAgent 流式工具调用",
+				zap.Int("round", round+1),
+				zap.Int("tool_calls", len(toolCalls)),
+			)
+
 			messages = append(messages, llm.Message{
 				Role:      llm.RoleAssistant,
-				Content:   resp.Content,
-				ToolCalls: resp.ToolCalls,
+				Content:   fullContent,
+				ToolCalls: toolCalls,
 			})
 
-			for _, tc := range resp.ToolCalls {
+			for _, tc := range toolCalls {
 				// 推送工具调用状态
 				chunks <- StreamChunk{
 					Type:     ChunkToolStart,
@@ -186,7 +218,12 @@ func (a *FundAgent) RunStream(ctx context.Context, input *AgentInput) (<-chan St
 					Content:  fmt.Sprintf("正在调用 %s...", toolDisplayName(tc.Name)),
 				}
 
-				result := a.executeTool(ctx, tc)
+				// 注入进度回调，让工具可以推送中间状态（如辩论阶段）
+				toolCtx := ContextWithToolProgress(ctx, func(chunk StreamChunk) {
+					chunks <- chunk
+				})
+
+				result := a.executeTool(toolCtx, tc)
 				messages = append(messages, llm.Message{
 					Role:       llm.RoleTool,
 					Content:    result,
@@ -200,6 +237,12 @@ func (a *FundAgent) RunStream(ctx context.Context, input *AgentInput) (<-chan St
 					Content:  fmt.Sprintf("%s 查询完成", toolDisplayName(tc.Name)),
 				}
 			}
+
+			// 推送思考进度：让前端知道 Agent 正在综合分析
+			chunks <- StreamChunk{
+				Type:    ChunkThinking,
+				Content: thinkingMessage(round, len(toolCalls)),
+			}
 		}
 
 		chunks <- StreamChunk{
@@ -209,20 +252,6 @@ func (a *FundAgent) RunStream(ctx context.Context, input *AgentInput) (<-chan St
 	}()
 
 	return chunks, nil
-}
-
-// emitContentChunks 将文本分块推送到 channel，模拟流式输出体验
-// 按 rune 分块，每块约 20 个字符，避免一次性推送大量文本
-func (a *FundAgent) emitContentChunks(chunks chan<- StreamChunk, content string) {
-	const chunkSize = 20 // 每块 rune 数
-	runes := []rune(content)
-	for i := 0; i < len(runes); i += chunkSize {
-		end := i + chunkSize
-		if end > len(runes) {
-			end = len(runes)
-		}
-		chunks <- StreamChunk{Type: ChunkText, Content: string(runes[i:end])}
-	}
 }
 
 // buildMessages 构建 LLM 消息序列
@@ -304,10 +333,10 @@ type promptLogMeta struct {
 //
 // Enable with env var:
 //
-//	FUNDMIND_LOG_PROMPT=1     # summary (info level)
-//	FUNDMIND_LOG_PROMPT=full  # include per-message previews (debug level)
+//	QUINFI_LOG_PROMPT=1     # summary (info level)
+//	QUINFI_LOG_PROMPT=full  # include per-message previews (debug level)
 func (a *FundAgent) maybeLogPromptSummary(input *AgentInput, messages []llm.Message, meta promptLogMeta) {
-	mode := strings.ToLower(strings.TrimSpace(logger.GetEnv("FUNDMIND_LOG_PROMPT", "")))
+	mode := strings.ToLower(strings.TrimSpace(logger.GetEnv("QUINFI_LOG_PROMPT", "")))
 	if mode == "" || mode == "0" || mode == "false" || mode == "off" {
 		return
 	}
@@ -467,6 +496,14 @@ func (a *FundAgent) executeTool(ctx context.Context, tc llm.ToolCall) string {
 	)
 
 	return result
+}
+
+// thinkingMessage 根据轮次和工具数量生成思考进度描述
+func thinkingMessage(round, toolCount int) string {
+	if round == 0 {
+		return fmt.Sprintf("已完成 %d 项数据查询，正在综合分析...", toolCount)
+	}
+	return fmt.Sprintf("正在补充更多数据进行深入分析...（第 %d 轮）", round+1)
 }
 
 // toolDisplayName 工具名称的中文显示

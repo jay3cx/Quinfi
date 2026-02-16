@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img">
+  <title>Quinfi Icon - Bloom</title>
+  <rect width="512" height="512" rx="112" fill="#C96442"/>
+  <defs>
+    <path id="petal7i" d="M256,92 C284,192 284,296 256,372 C228,296 228,192 256,92Z"/>
+  </defs>
+  <g fill="white">
+    <use href="#petal7i"/>
+    <use href="#petal7i" transform="rotate(72, 256, 256)"/>
+    <use href="#petal7i" transform="rotate(144, 256, 256)"/>
+    <use href="#petal7i" transform="rotate(216, 256, 256)"/>
+    <use href="#petal7i" transform="rotate(288, 256, 256)"/>
+  </g>
+  <circle cx="256" cy="256" r="32" fill="#C96442"/>
+  <circle cx="256" cy="256" r="18" fill="white"/>
+</svg>

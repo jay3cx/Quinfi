@@ -7,9 +7,9 @@ import (
 	"math"
 	"strings"
 
-	"github.com/jay3cx/fundmind/internal/agent"
-	"github.com/jay3cx/fundmind/internal/memory"
-	"github.com/jay3cx/fundmind/pkg/logger"
+	"github.com/jay3cx/Quinfi/internal/agent"
+	"github.com/jay3cx/Quinfi/internal/memory"
+	"github.com/jay3cx/Quinfi/pkg/logger"
 	"go.uber.org/zap"
 )
 

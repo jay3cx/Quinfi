@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jay3cx/fundmind/internal/datasource"
-	"github.com/jay3cx/fundmind/pkg/logger"
+	"github.com/jay3cx/Quinfi/internal/datasource"
+	"github.com/jay3cx/Quinfi/pkg/logger"
 	"go.uber.org/zap"
 )
 
@@ -23,6 +23,8 @@ const (
 	fundDetailURL = "https://fund.eastmoney.com/pingzhongdata/%s.js"
 	// 基金持仓 API
 	fundHoldingURL = "https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=%s&topline=10"
+	// 基金详细信息 API（移动端，含基金公司等）
+	fundDetailInfoURL = "https://fundmobapi.eastmoney.com/FundMNewApi/FundMNDetailInformation?FCODE=%s&deviceid=1&plat=Android&appType=ttjj&product=EFund&Version=1"
 )
 
 // Client 东方财富 API 客户端
@@ -50,6 +52,9 @@ func (c *Client) GetFundInfo(ctx context.Context, code string) (*datasource.Fund
 
 	// 2. 从东方财富详情页补充详细信息（经理、规模、类型、收益率）
 	c.enrichFundDetail(ctx, fund)
+
+	// 3. 从移动端 API 补充基金公司
+	c.enrichFundCompany(ctx, fund)
 
 	logger.Info("获取基金信息成功",
 		zap.String("code", code),
@@ -176,6 +181,38 @@ func (c *Client) enrichFundDetail(ctx context.Context, fund *datasource.Fund) {
 				fund.Scale = fund.Manager.TotalScale / float64(fund.Manager.FundCount)
 			}
 		}
+	}
+}
+
+// enrichFundCompany 从天天基金移动端 API 补充基金公司名称
+func (c *Client) enrichFundCompany(ctx context.Context, fund *datasource.Fund) {
+	apiURL := fmt.Sprintf(fundDetailInfoURL, fund.Code)
+
+	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
+	if err != nil {
+		return
+	}
+	req.Header.Set("Referer", "https://fund.eastmoney.com/")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+
+	var result struct {
+		Datas struct {
+			JJGS string `json:"JJGS"`
+		} `json:"Datas"`
+	}
+	if json.Unmarshal(body, &result) == nil && result.Datas.JJGS != "" {
+		fund.Company = result.Datas.JJGS
 	}
 }
 

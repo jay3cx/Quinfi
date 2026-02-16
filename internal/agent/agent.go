@@ -56,11 +56,28 @@ type TokenUsage struct {
 type ChunkType string
 
 const (
-	ChunkText       ChunkType = "text"        // 文本内容
-	ChunkToolStart  ChunkType = "tool_start"  // 工具调用开始
-	ChunkToolResult ChunkType = "tool_result" // 工具调用结果
-	ChunkThinking   ChunkType = "thinking"    // 思考中间状态
+	ChunkText         ChunkType = "text"          // 文本内容
+	ChunkToolStart    ChunkType = "tool_start"    // 工具调用开始
+	ChunkToolResult   ChunkType = "tool_result"   // 工具调用结果
+	ChunkThinking     ChunkType = "thinking"      // 思考中间状态
+	ChunkDebatePhase  ChunkType = "debate_phase"  // 辩论阶段进度
 )
+
+// ToolProgressFunc 工具执行中的流式进度回调
+type ToolProgressFunc func(chunk StreamChunk)
+
+type ctxKeyToolProgress struct{}
+
+// ContextWithToolProgress 将进度回调注入 context
+func ContextWithToolProgress(ctx context.Context, fn ToolProgressFunc) context.Context {
+	return context.WithValue(ctx, ctxKeyToolProgress{}, fn)
+}
+
+// ToolProgressFromContext 从 context 中获取进度回调
+func ToolProgressFromContext(ctx context.Context) ToolProgressFunc {
+	fn, _ := ctx.Value(ctxKeyToolProgress{}).(ToolProgressFunc)
+	return fn
+}
 
 // StreamChunk 流式响应块
 type StreamChunk struct {

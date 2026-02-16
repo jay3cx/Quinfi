@@ -1,6 +1,6 @@
-# FundMind
+# Quinfi
 
-FundMind 是一个面向个人投资者的 AI 基金投研助手项目。
+Quinfi 是一个面向个人投资者的 AI 基金投研助手项目。
 
 ## 项目结构
 

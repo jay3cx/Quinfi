@@ -1,4 +1,4 @@
-// FundMind - AI 智能基金投研助手
+// Quinfi - AI 智能基金投研助手
 // 主入口文件
 package main
 
@@ -13,10 +13,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/jay3cx/fundmind/internal/api"
-	"github.com/jay3cx/fundmind/internal/config"
-	"github.com/jay3cx/fundmind/internal/db"
-	"github.com/jay3cx/fundmind/pkg/logger"
+	"github.com/jay3cx/Quinfi/internal/api"
+	"github.com/jay3cx/Quinfi/internal/config"
+	"github.com/jay3cx/Quinfi/internal/db"
+	"github.com/jay3cx/Quinfi/pkg/logger"
 	"go.uber.org/zap"
 )
 
@@ -39,7 +39,7 @@ func main() {
 	}
 	defer logger.Sync()
 
-	logger.Info("FundMind 服务启动中...",
+	logger.Info("Quinfi 服务启动中...",
 		zap.String("port", cfg.Server.Port),
 		zap.String("mode", cfg.Server.Mode),
 		zap.String("log_level", cfg.Log.Level),
@@ -60,7 +60,7 @@ func main() {
 		Addr:         addr,
 		Handler:      result.Engine,
 		ReadTimeout:  30 * time.Second,
-		WriteTimeout: 120 * time.Second, // SSE 需要较长写超时
+		WriteTimeout: 10 * time.Minute, // SSE 辩论流程可达 5 分钟，需足够长的写超时
 		IdleTimeout:  120 * time.Second,
 	}
 
@@ -99,7 +99,7 @@ func main() {
 		result.RSSScheduler.Stop()
 	}
 
-	logger.Info("FundMind 服务已完全关闭")
+	logger.Info("Quinfi 服务已完全关闭")
 }
 
 // initDB 初始化数据库，返回 nil 表示降级为纯内存模式

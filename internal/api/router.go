@@ -10,24 +10,24 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jay3cx/fundmind/internal/agent"
-	"github.com/jay3cx/fundmind/internal/config"
-	"github.com/jay3cx/fundmind/internal/datasource"
-	"github.com/jay3cx/fundmind/internal/datasource/eastmoney"
-	"github.com/jay3cx/fundmind/internal/analyzer"
-	funddb "github.com/jay3cx/fundmind/internal/db"
-	"github.com/jay3cx/fundmind/internal/debate"
-	"github.com/jay3cx/fundmind/internal/memory"
-	"github.com/jay3cx/fundmind/internal/orchestrator"
-	"github.com/jay3cx/fundmind/internal/portfolio"
-	"github.com/jay3cx/fundmind/internal/quant"
-	"github.com/jay3cx/fundmind/internal/task"
-	"github.com/jay3cx/fundmind/internal/rss"
-	"github.com/jay3cx/fundmind/internal/scheduler"
-	"github.com/jay3cx/fundmind/internal/vision"
-	"github.com/jay3cx/fundmind/pkg/llm"
-	llmopenai "github.com/jay3cx/fundmind/pkg/llm/openai"
-	"github.com/jay3cx/fundmind/pkg/logger"
+	"github.com/jay3cx/Quinfi/internal/agent"
+	"github.com/jay3cx/Quinfi/internal/config"
+	"github.com/jay3cx/Quinfi/internal/datasource"
+	"github.com/jay3cx/Quinfi/internal/datasource/eastmoney"
+	"github.com/jay3cx/Quinfi/internal/analyzer"
+	funddb "github.com/jay3cx/Quinfi/internal/db"
+	"github.com/jay3cx/Quinfi/internal/debate"
+	"github.com/jay3cx/Quinfi/internal/memory"
+	"github.com/jay3cx/Quinfi/internal/orchestrator"
+	"github.com/jay3cx/Quinfi/internal/portfolio"
+	"github.com/jay3cx/Quinfi/internal/quant"
+	"github.com/jay3cx/Quinfi/internal/task"
+	"github.com/jay3cx/Quinfi/internal/rss"
+	"github.com/jay3cx/Quinfi/internal/scheduler"
+	"github.com/jay3cx/Quinfi/internal/vision"
+	"github.com/jay3cx/Quinfi/pkg/llm"
+	llmopenai "github.com/jay3cx/Quinfi/pkg/llm/openai"
+	"github.com/jay3cx/Quinfi/pkg/logger"
 	"go.uber.org/zap"
 )
 
@@ -77,7 +77,11 @@ func SetupRouter(cfg *config.Config, db *sql.DB) *SetupResult {
 	toolRegistry := createToolRegistry(cachedDS, emClient, rssStore)
 
 	// 创建多空辩论编排器 + 注册为 Agent 工具
-	debateOrch := debate.NewOrchestrator(agentClient, toolRegistry)
+	debateOrch := debate.NewOrchestratorWithConfidence(agentClient, toolRegistry, debate.ConfidenceConfig{
+		ReviewThreshold: cfg.Debate.Confidence.ReviewThreshold,
+		PassThreshold:   cfg.Debate.Confidence.PassThreshold,
+		HardCap:         cfg.Debate.Confidence.HardCap,
+	})
 	debateAdapter := debate.NewToolAdapter(debateOrch)
 	toolRegistry.Register(agent.NewRunDebateTool(debateAdapter))
 

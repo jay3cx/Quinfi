@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jay3cx/fundmind/internal/datasource"
+	"github.com/jay3cx/Quinfi/internal/datasource"
 )
 
 // FundHandler 基金 API 处理器

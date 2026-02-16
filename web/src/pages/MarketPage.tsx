@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react"
 import { SentimentBadge } from "@/components/SentimentBadge"
-import { getNews, getBriefs, type Brief } from "@/lib/api"
+import { getNews, getBriefs, generateBrief, getRSSStatus, toggleRSS, type Brief } from "@/lib/api"
 import type { Article } from "@/types"
-import { ExternalLink, FileText } from "lucide-react"
+import { ExternalLink, FileText, Rss, RefreshCw, Loader2 } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import rehypeRaw from "rehype-raw"
@@ -23,13 +23,17 @@ export default function MarketPage() {
     const [loading, setLoading] = useState(true)
     const [offset, setOffset] = useState(0)
     const [briefs, setBriefs] = useState<Brief[]>([])
+    const [rssRunning, setRssRunning] = useState(true)
+    const [rssToggling, setRssToggling] = useState(false)
+    const [generating, setGenerating] = useState(false)
     const limit = 20
 
-    // 加载简报
+    // 加载简报 + RSS 状态
     useEffect(() => {
         getBriefs().then((res) => setBriefs(res.data || [])).catch((err) => {
             console.error("[MarketPage] Failed to load briefs:", err)
         })
+        getRSSStatus().then((res) => setRssRunning(res.running)).catch(() => {})
     }, [])
 
     useEffect(() => {
@@ -65,6 +69,34 @@ export default function MarketPage() {
         })
     }
 
+    const handleGenerate = () => {
+        setGenerating(true)
+        generateBrief()
+            .then(() => {
+                // 轮询等待简报生成完成
+                const poll = setInterval(() => {
+                    getBriefs().then((res) => {
+                        if (res.data?.length && res.data[0].created_at !== briefs[0]?.created_at) {
+                            setBriefs(res.data)
+                            setGenerating(false)
+                            clearInterval(poll)
+                        }
+                    })
+                }, 3000)
+                // 最多等 60 秒
+                setTimeout(() => { clearInterval(poll); setGenerating(false) }, 60000)
+            })
+            .catch(() => setGenerating(false))
+    }
+
+    const handleToggleRSS = () => {
+        setRssToggling(true)
+        toggleRSS(!rssRunning)
+            .then((res) => setRssRunning(res.running))
+            .catch((err) => console.error("[MarketPage] Failed to toggle RSS:", err))
+            .finally(() => setRssToggling(false))
+    }
+
     const formatDate = (dateStr: string) => {
         try {
             const d = new Date(dateStr)
@@ -80,12 +112,21 @@ export default function MarketPage() {
                     <h1 className="text-xl font-semibold text-[var(--color-text)] mb-6">Market Overview</h1>
 
                     {/* 每日简报 */}
-                    {briefs.length > 0 && (
+                    {briefs.length > 0 ? (
                         <div className="bg-white rounded-xl border border-[var(--color-border)] p-6 mb-6">
                             <div className="flex items-center gap-2 mb-3">
                                 <FileText className="w-4 h-4 text-[var(--color-primary)]" />
                                 <span className="text-sm font-medium text-[var(--color-text)]">每日投资简报</span>
                                 <span className="text-xs text-[var(--color-text-muted)]">{formatDate(briefs[0].created_at)}</span>
+                                <button
+                                    onClick={handleGenerate}
+                                    disabled={generating}
+                                    className="ml-auto flex items-center gap-1 px-2.5 py-1 text-xs rounded-md border border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)]/30 transition-colors disabled:opacity-50"
+                                    title="重新生成今日简报"
+                                >
+                                    {generating ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                                    {generating ? "生成中..." : "重新生成"}
+                                </button>
                             </div>
                             <div className="text-sm text-[var(--color-text)] leading-relaxed space-y-3">
                                 <ReactMarkdown
@@ -108,10 +149,23 @@ export default function MarketPage() {
                                 </ReactMarkdown>
                             </div>
                         </div>
+                    ) : (
+                        <div className="bg-white rounded-xl border border-[var(--color-border)] p-6 mb-6 text-center">
+                            <FileText className="w-6 h-6 text-[var(--color-text-muted)] mx-auto mb-2" />
+                            <p className="text-sm text-[var(--color-text-muted)] mb-3">暂无投资简报</p>
+                            <button
+                                onClick={handleGenerate}
+                                disabled={generating}
+                                className="inline-flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-[var(--color-primary)] text-white hover:opacity-90 transition-opacity disabled:opacity-50"
+                            >
+                                {generating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+                                {generating ? "生成中..." : "生成今日简报"}
+                            </button>
+                        </div>
                     )}
 
-                    {/* Filter */}
-                    <div className="flex gap-2 mb-6">
+                    {/* Filter + RSS Toggle */}
+                    <div className="flex items-center gap-2 mb-6">
                         {FILTERS.map((f) => (
                             <button
                                 key={f.key}
@@ -127,6 +181,23 @@ export default function MarketPage() {
                         <span className="text-xs text-[var(--color-text-muted)] self-center ml-2">
                             共 {total} 条
                         </span>
+
+                        <div className="ml-auto flex items-center gap-2">
+                            <button
+                                onClick={handleToggleRSS}
+                                disabled={rssToggling}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-full border transition-colors ${
+                                    rssRunning
+                                        ? "border-[var(--color-up)]/30 text-[var(--color-up)] hover:bg-[var(--color-up)]/5"
+                                        : "border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-sidebar-bg)]"
+                                }`}
+                                title={rssRunning ? "点击暂停新闻抓取" : "点击恢复新闻抓取"}
+                            >
+                                <Rss className="w-3 h-3" />
+                                <span className={`w-1.5 h-1.5 rounded-full ${rssRunning ? "bg-[var(--color-up)]" : "bg-[var(--color-text-muted)]"}`} />
+                                {rssRunning ? "抓取中" : "已暂停"}
+                            </button>
+                        </div>
                     </div>
 
                     {/* News List */}

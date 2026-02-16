@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jay3cx/fundmind/pkg/llm"
-	"github.com/jay3cx/fundmind/pkg/logger"
+	"github.com/jay3cx/Quinfi/pkg/llm"
+	"github.com/jay3cx/Quinfi/pkg/logger"
 	"go.uber.org/zap"
 )
 
@@ -130,7 +130,7 @@ func (s *Summarizer) doSummarize(ctx context.Context, article *Article) error {
 		Messages: []llm.Message{
 			{Role: llm.RoleUser, Content: prompt},
 		},
-		MaxTokens:   1000,
+		MaxTokens:   0,
 		Temperature: 0.3,
 	}
 

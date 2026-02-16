@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="c1i-title">
+  <title id="c1i-title">Quinfi Icon - Growth Nodes</title>
+  <defs>
+    <linearGradient id="bg1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#D4845F"/>
+      <stop offset="100%" stop-color="#C96442"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg1)"/>
+  <!-- Ascending curve -->
+  <path d="M108,388 C168,366 206,306 256,256 C306,206 344,156 404,118"
+        fill="none" stroke="white" stroke-width="20" stroke-linecap="round"/>
+  <!-- Node 1 -->
+  <circle cx="120" cy="380" r="28" fill="white"/>
+  <!-- Node 2 -->
+  <circle cx="256" cy="256" r="36" fill="white"/>
+  <!-- Node 3 -->
+  <circle cx="392" cy="126" r="44" fill="white"/>
+</svg>

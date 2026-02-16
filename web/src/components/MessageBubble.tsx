@@ -1,7 +1,6 @@
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import rehypeRaw from "rehype-raw"
-import { Bot, User } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { DebateCard, isDebateContent } from "@/components/DebateCard"
 
@@ -38,16 +37,7 @@ export function MessageBubble({ role, content, children }: Message) {
     const navigate = useNavigate()
 
     return (
-        <div className={`flex gap-4 mb-8 ${isUser ? "flex-row-reverse" : ""}`}>
-            <div
-                className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${isUser
-                    ? "bg-[var(--color-sidebar-bg)] text-[var(--color-text-secondary)]"
-                    : "bg-[var(--color-primary)] text-white"
-                    }`}
-            >
-                {isUser ? <User className="w-3.5 h-3.5" /> : <Bot className="w-3.5 h-3.5" />}
-            </div>
-
+        <div className={`flex mb-8 ${isUser ? "justify-end" : ""}`}>
             <div className={`flex flex-col max-w-[650px] ${isUser ? "items-end" : "items-start"}`}>
                 {isUser ? (
                     <div className="bg-[var(--color-sidebar-bg)] px-4 py-3 rounded-2xl rounded-tr-sm text-[var(--color-text)] leading-relaxed">

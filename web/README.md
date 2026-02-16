@@ -1,6 +1,6 @@
-# FundMind Web
+# Quinfi Web
 
-FundMind Web 前端（React + TypeScript + Vite）。
+Quinfi Web 前端（React + TypeScript + Vite）。
 
 ## Stack
 

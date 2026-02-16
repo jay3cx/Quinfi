@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"text/template"
 
-	"github.com/jay3cx/fundmind/internal/datasource"
+	"github.com/jay3cx/Quinfi/internal/datasource"
 )
 
 // PromptTemplate Prompt 模板类型

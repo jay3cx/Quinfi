@@ -84,6 +84,16 @@ func (w *SSEWriter) WriteSSEResponse(resp *SSEResponse) error {
 	return w.WriteEvent(resp)
 }
 
+// WriteHeartbeat 写入 SSE 注释心跳（不影响客户端解析，保持连接活跃）
+func (w *SSEWriter) WriteHeartbeat() error {
+	_, err := fmt.Fprint(w.ctx.Writer, ": heartbeat\n\n")
+	if err != nil {
+		return err
+	}
+	w.ctx.Writer.Flush()
+	return nil
+}
+
 // IsClientDisconnected 检查客户端是否断开连接
 func (w *SSEWriter) IsClientDisconnected() bool {
 	select {

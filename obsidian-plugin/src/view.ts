@@ -74,7 +74,7 @@ export class FundAnalysisView extends ItemView {
 
     if (!this.fundCode) {
       container.createEl("p", {
-        text: '请使用 "FundMind: 查询基金" 命令输入基金代码',
+        text: '请使用 "Quinfi: 查询基金" 命令输入基金代码',
         cls: "fundmind-hint",
       });
       return;

@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/jay3cx/fundmind/pkg/llm"
+	"github.com/jay3cx/Quinfi/pkg/llm"
 )
 
 // === 辅助函数 ===
@@ -25,8 +25,8 @@ func TestFundAgent_Name(t *testing.T) {
 	mock := llm.NewMockClient()
 	agent := newTestAgent(mock)
 
-	if agent.Name() != "小基" {
-		t.Errorf("expected '小基', got '%s'", agent.Name())
+	if agent.Name() != "Quinfi" {
+		t.Errorf("expected 'Quinfi', got '%s'", agent.Name())
 	}
 }
 

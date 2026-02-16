@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img">
+  <title>Quinfi Icon - Triskelion</title>
+  <rect width="512" height="512" rx="112" fill="#C96442"/>
+  <defs>
+    <path id="arm8i" d="M256,256 C256,192 278,140 326,118 C374,96 418,118 426,172"/>
+  </defs>
+  <g fill="none" stroke="white" stroke-width="38" stroke-linecap="round">
+    <use href="#arm8i"/>
+    <use href="#arm8i" transform="rotate(120, 256, 256)"/>
+    <use href="#arm8i" transform="rotate(240, 256, 256)"/>
+  </g>
+  <circle cx="256" cy="256" r="26" fill="white"/>
+</svg>

@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jay3cx/fundmind/internal/quant"
+	"github.com/jay3cx/Quinfi/internal/quant"
 )
 
 // QuantDataLoader 量化数据加载接口

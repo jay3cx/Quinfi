@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img">
+  <title>Quinfi Icon - Sparkle</title>
+  <rect width="512" height="512" rx="112" fill="#C96442"/>
+  <path d="M256,56 C268,176 336,244 456,256 C336,268 268,336 256,456 C244,336 176,268 56,256 C176,244 244,176 256,56Z"
+        fill="white"/>
+</svg>

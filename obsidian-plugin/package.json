@@ -1,14 +1,14 @@
 {
-  "name": "fundmind-obsidian",
+  "name": "quinfi-obsidian",
   "version": "1.0.0",
-  "description": "FundMind 基金投研助手 Obsidian 插件",
+  "description": "Quinfi 基金投研助手 Obsidian 插件",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",
     "build": "node esbuild.config.mjs production"
   },
   "keywords": ["obsidian", "fund", "investment"],
-  "author": "FundMind",
+  "author": "Quinfi",
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^20.0.0",

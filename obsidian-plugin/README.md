@@ -1,6 +1,6 @@
-# FundMind Obsidian Plugin
+# Quinfi Obsidian Plugin
 
-FundMind 的 Obsidian 插件子项目，用于在 Obsidian Vault 中集成基金投研工作流。
+Quinfi 的 Obsidian 插件子项目，用于在 Obsidian Vault 中集成基金投研工作流。
 
 ## Stack
 

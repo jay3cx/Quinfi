@@ -14,30 +14,54 @@ var Log *zap.Logger = zap.NewNop()
 // Init 初始化日志系统
 // env: "development" 使用人类可读格式，其他使用 JSON 格式
 // level: 日志级别（debug/info/warn/error），为空则使用环境默认级别
+// 日志同时输出到终端和 ./quinfi.log 文件
 func Init(env string, level string) error {
-	var config zap.Config
-
-	if env == "development" {
-		config = zap.NewDevelopmentConfig()
-		config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
-	} else {
-		config = zap.NewProductionConfig()
-	}
-
-	// 应用指定的日志级别
+	// 解析日志级别
+	atomicLevel := zap.NewAtomicLevel()
 	if level != "" {
 		var lvl zapcore.Level
 		if err := lvl.UnmarshalText([]byte(level)); err == nil {
-			config.Level = zap.NewAtomicLevelAt(lvl)
+			atomicLevel.SetLevel(lvl)
 		}
+	} else if env == "development" {
+		atomicLevel.SetLevel(zapcore.DebugLevel)
 	}
 
-	var err error
-	Log, err = config.Build()
+	// 终端 encoder
+	var consoleEncoder zapcore.Encoder
+	if env == "development" {
+		encCfg := zap.NewDevelopmentEncoderConfig()
+		encCfg.EncodeLevel = zapcore.CapitalColorLevelEncoder
+		consoleEncoder = zapcore.NewConsoleEncoder(encCfg)
+	} else {
+		consoleEncoder = zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig())
+	}
+
+	// 文件 encoder（始终 JSON，方便分析）
+	fileEncCfg := zap.NewProductionEncoderConfig()
+	fileEncCfg.TimeKey = "ts"
+	fileEncCfg.EncodeTime = zapcore.ISO8601TimeEncoder
+	fileEncoder := zapcore.NewJSONEncoder(fileEncCfg)
+
+	// 打开日志文件（追加模式）
+	logFile, err := os.OpenFile("quinfi.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
+		// 文件打不开则退化为纯终端
+		Log, err = zap.Config{
+			Level:            atomicLevel,
+			OutputPaths:      []string{"stderr"},
+			ErrorOutputPaths: []string{"stderr"},
+		}.Build()
 		return err
 	}
 
+	// 双写 core：终端 + 文件
+	core := zapcore.NewTee(
+		zapcore.NewCore(consoleEncoder, zapcore.Lock(os.Stderr), atomicLevel),
+		zapcore.NewCore(fileEncoder, zapcore.AddSync(logFile), atomicLevel),
+	)
+
+	Log = zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
 	return nil
 }
 

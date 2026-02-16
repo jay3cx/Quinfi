@@ -1,4 +1,4 @@
-# FundMind 配置文件示例
+# Quinfi 配置文件示例
 # 复制此文件为 config.yaml 并根据需要修改
 
 server:
@@ -18,8 +18,8 @@ llm:
   #   LLM_API_KEY  - 覆盖 api_key
 
 db:
-  path: "data/fundmind.db"  # SQLite 数据库路径，留空则纯内存模式
-  # 环境变量覆盖：FUNDMIND_DB_PATH
+  path: "data/quinfi.db"  # SQLite 数据库路径，留空则纯内存模式
+  # 环境变量覆盖：QUINFI_DB_PATH
 
 session:
   ttl: "24h"  # 会话过期时间（支持 Go duration 格式：1h, 24h, 72h 等）
@@ -52,3 +52,9 @@ rss:
     # - url: "https://your-rsshub.com/wallstreetcn/news/global"
     #   name: "华尔街见闻"
     #   interval: "15m"
+
+debate:
+  confidence:
+    review_threshold: 70  # 低于该值触发复核
+    pass_threshold: 75    # 终判通过阈值
+    hard_cap: 60          # 命中硬规则时系统分上限

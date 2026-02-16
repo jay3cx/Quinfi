@@ -5,10 +5,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jay3cx/fundmind/internal/datasource"
-	funddb "github.com/jay3cx/fundmind/internal/db"
-	"github.com/jay3cx/fundmind/internal/quant"
-	"github.com/jay3cx/fundmind/pkg/logger"
+	"github.com/jay3cx/Quinfi/internal/datasource"
+	funddb "github.com/jay3cx/Quinfi/internal/db"
+	"github.com/jay3cx/Quinfi/internal/quant"
+	"github.com/jay3cx/Quinfi/pkg/logger"
 	"go.uber.org/zap"
 )
 

@@ -1,10 +1,10 @@
 {
-  "id": "fundmind",
-  "name": "FundMind",
+  "id": "quinfi",
+  "name": "Quinfi",
   "version": "1.0.0",
   "minAppVersion": "1.0.0",
   "description": "基金投研助手 - 快速查询基金信息和 AI 分析",
-  "author": "FundMind",
-  "authorUrl": "https://github.com/jay3cx/fundmind",
+  "author": "Quinfi",
+  "authorUrl": "https://github.com/jay3cx/Quinfi",
   "isDesktopOnly": false
 }

@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jay3cx/fundmind/pkg/logger"
+	"github.com/jay3cx/Quinfi/pkg/logger"
 	"go.uber.org/zap"
 )
 
@@ -20,6 +20,7 @@ type Scheduler struct {
 	ctx        context.Context
 	cancel     context.CancelFunc
 	wg         sync.WaitGroup
+	paused     bool // 暂停标志：true 时跳过抓取和摘要生成
 }
 
 type scheduledFeed struct {
@@ -116,6 +117,9 @@ func (s *Scheduler) runFeed(sf *scheduledFeed) {
 			sf.ticker.Stop()
 			return
 		case <-sf.ticker.C:
+			if s.IsPaused() {
+				continue
+			}
 			s.fetchFeed(sf.feed)
 		}
 	}
@@ -152,6 +156,9 @@ func (s *Scheduler) fetchFeed(feed *Feed) {
 
 // summarizeNewArticles 为新文章生成摘要并持久化
 func (s *Scheduler) summarizeNewArticles(articles []*Article) {
+	if s.IsPaused() {
+		return
+	}
 	ctx, cancel := context.WithTimeout(s.ctx, 5*time.Minute)
 	defer cancel()
 
@@ -272,4 +279,33 @@ func (s *Scheduler) FeedCount() int {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return len(s.feeds)
+}
+
+// IsPaused 返回是否暂停
+func (s *Scheduler) IsPaused() bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.paused
+}
+
+// Pause 暂停调度器（停止抓取和摘要生成，保留 Feed 信息）
+func (s *Scheduler) Pause() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.paused {
+		return
+	}
+	s.paused = true
+	logger.Info("RSS 调度器已暂停")
+}
+
+// Resume 恢复调度器
+func (s *Scheduler) Resume() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if !s.paused {
+		return
+	}
+	s.paused = false
+	logger.Info("RSS 调度器已恢复")
 }

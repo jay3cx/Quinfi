@@ -6,8 +6,8 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/jay3cx/fundmind/pkg/llm"
-	"github.com/jay3cx/fundmind/pkg/logger"
+	"github.com/jay3cx/Quinfi/pkg/llm"
+	"github.com/jay3cx/Quinfi/pkg/logger"
 	"go.uber.org/zap"
 )
 
@@ -50,7 +50,7 @@ type Extractor struct {
 func NewExtractor(client llm.Client) *Extractor {
 	return &Extractor{
 		client: client,
-		model:  llm.ModelGemini3ProHigh,
+		model:  llm.ModelGLM5,
 	}
 }
 
@@ -72,7 +72,7 @@ func (e *Extractor) Extract(ctx context.Context, userMessage, assistantResponse,
 			{Role: llm.RoleSystem, Content: extractionPrompt},
 			{Role: llm.RoleUser, Content: conversation},
 		},
-		MaxTokens:   500,
+		MaxTokens:   0,
 		Temperature: 0.1, // 低温度确保输出稳定
 	})
 	if err != nil {

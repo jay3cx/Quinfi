@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="c3-title">
+  <title id="c3-title">Quinfi Logo - Mind Chart</title>
+  <defs>
+    <linearGradient id="bg-grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#D4845F"/>
+      <stop offset="100%" stop-color="#C96442"/>
+    </linearGradient>
+  </defs>
+  <!-- App icon rounded square -->
+  <rect width="512" height="512" rx="112" fill="url(#bg-grad)"/>
+  <!-- Simplified brain outline (two lobes) -->
+  <path d="M148,310 C120,260 128,180 190,140 C240,108 272,128 280,164"
+        fill="none" stroke="white" stroke-width="26" stroke-linecap="round"/>
+  <path d="M280,164 C292,130 340,118 366,156 C392,194 370,248 344,270"
+        fill="none" stroke="white" stroke-width="26" stroke-linecap="round"/>
+  <path d="M344,270 C316,290 296,298 268,302 C244,306 224,326 208,348"
+        fill="none" stroke="white" stroke-width="26" stroke-linecap="round"/>
+  <path d="M208,348 C188,328 168,320 148,310"
+        fill="none" stroke="white" stroke-width="26" stroke-linecap="round"/>
+  <!-- Ascending trend line through brain -->
+  <path d="M160,380 L232,296 L304,348 L400,200"
+        fill="none" stroke="white" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Arrow tip -->
+  <path d="M374,194 L400,200 L394,226"
+        fill="none" stroke="white" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

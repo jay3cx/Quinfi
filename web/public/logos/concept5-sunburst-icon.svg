@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img">
+  <title>Quinfi Icon - Sunburst</title>
+  <rect width="512" height="512" rx="112" fill="#C96442"/>
+  <g fill="white">
+    <circle cx="256" cy="256" r="44"/>
+    <ellipse cx="256" cy="140" rx="20" ry="68"/>
+    <ellipse cx="338" cy="174" rx="20" ry="68" transform="rotate(45 338 174)"/>
+    <ellipse cx="372" cy="256" rx="20" ry="68" transform="rotate(90 372 256)"/>
+    <ellipse cx="338" cy="338" rx="20" ry="68" transform="rotate(135 338 338)"/>
+    <ellipse cx="256" cy="372" rx="20" ry="68"/>
+    <ellipse cx="174" cy="338" rx="20" ry="68" transform="rotate(45 174 338)"/>
+    <ellipse cx="140" cy="256" rx="20" ry="68" transform="rotate(90 140 256)"/>
+    <ellipse cx="174" cy="174" rx="20" ry="68" transform="rotate(135 174 174)"/>
+  </g>
+</svg>

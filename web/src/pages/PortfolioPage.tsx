@@ -17,16 +17,6 @@ interface HoldingItem {
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024 // 5MB
 
-// 仓位色板 — 柔和的自然色系，与 Organic 风格匹配
-const PALETTE = [
-    "#166534", // forest green
-    "#1e6091", // ocean blue
-    "#9a5c16", // warm amber
-    "#7e3794", // soft purple
-    "#b34525", // terracotta
-    "#0e7490", // teal
-]
-
 export default function PortfolioPage() {
     const navigate = useNavigate()
     const [holdings, setHoldings] = useState<HoldingItem[]>([])
@@ -102,7 +92,6 @@ export default function PortfolioPage() {
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (!file) return
-        // 重置 input 以允许再次选择相同文件
         e.target.value = ""
 
         if (file.size > MAX_IMAGE_SIZE) {
@@ -161,29 +150,26 @@ export default function PortfolioPage() {
 
     return (
         <div className="flex-1 overflow-y-auto">
-            <div className="max-w-4xl mx-auto px-6 py-8">
+            <div className="max-w-3xl mx-auto px-6 py-8">
+                {/* 顶栏：标题 + 操作 */}
                 <div className="flex items-center justify-between mb-8">
-                    <h1 className="text-xl font-semibold text-[var(--color-text)]">Portfolio</h1>
+                    <h1 className="text-lg font-semibold text-[var(--color-text)]">持仓</h1>
                     <div className="flex gap-2">
                         <Button
                             variant="outline"
-                            className="gap-2 border-[var(--color-border)] text-[var(--color-text)]"
+                            className="gap-2 border-[var(--color-border)] text-[var(--color-text)] text-xs h-8 px-3"
                             onClick={() => fileInputRef.current?.click()}
                             disabled={scanning}
                         >
-                            {scanning ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                                <Camera className="w-4 h-4" />
-                            )}
+                            {scanning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
                             {scanning ? "识别中..." : "截图导入"}
                         </Button>
                         <Button
                             variant="default"
-                            className="gap-2"
+                            className="gap-2 text-xs h-8 px-3"
                             onClick={() => setShowAddDialog(true)}
                         >
-                            <Plus className="w-4 h-4" /> 添加持仓
+                            <Plus className="w-3.5 h-3.5" /> 添加
                         </Button>
                     </div>
                     <input
@@ -197,7 +183,7 @@ export default function PortfolioPage() {
 
                 {/* 截图识别错误 */}
                 {scanError && (
-                    <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex items-center justify-between">
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-6 flex items-center justify-between">
                         <span className="text-sm text-red-700">{scanError}</span>
                         <button onClick={dismissScan} className="text-red-400 hover:text-red-600">
                             <X className="w-4 h-4" />
@@ -207,8 +193,8 @@ export default function PortfolioPage() {
 
                 {/* 截图识别 loading */}
                 {scanning && (
-                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-8 mb-6 text-center">
-                        <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)] mx-auto mb-3" />
+                    <div className="rounded-lg border border-[var(--color-border)] p-8 mb-6 text-center bg-white">
+                        <Loader2 className="w-6 h-6 animate-spin text-[var(--color-primary)] mx-auto mb-3" />
                         <div className="text-sm text-[var(--color-text)]">正在识别持仓截图...</div>
                         <div className="text-xs text-[var(--color-text-muted)] mt-1">通常需要 10-15 秒</div>
                     </div>
@@ -216,7 +202,7 @@ export default function PortfolioPage() {
 
                 {/* 截图识别结果确认 */}
                 {scanResults && (
-                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-6 mb-6">
+                    <div className="bg-white rounded-lg border border-[var(--color-border)] p-5 mb-6">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-sm font-medium text-[var(--color-text)]">
                                 识别结果 — 共 {scanResults.length} 只基金
@@ -238,27 +224,27 @@ export default function PortfolioPage() {
                                         )}
                                     </div>
                                     {h.amount > 0 && (
-                                        <span className="text-sm text-[var(--color-text)]">
-                                            {h.amount.toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} 元
+                                        <span className="text-sm tabular-nums text-[var(--color-text)]">
+                                            {h.amount.toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                         </span>
                                     )}
                                 </div>
                             ))}
                         </div>
                         <div className="flex gap-2">
-                            <Button onClick={confirmScanResults} className="gap-2">
-                                <Check className="w-4 h-4" /> 确认添加
+                            <Button onClick={confirmScanResults} className="gap-2 h-8 text-xs">
+                                <Check className="w-3.5 h-3.5" /> 确认添加
                             </Button>
-                            <Button variant="ghost" onClick={dismissScan}>
+                            <Button variant="ghost" onClick={dismissScan} className="h-8 text-xs">
                                 取消
                             </Button>
                         </div>
                     </div>
                 )}
 
-                {/* Add Dialog */}
+                {/* 添加对话框 */}
                 {showAddDialog && (
-                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-6 mb-6">
+                    <div className="bg-white rounded-lg border border-[var(--color-border)] p-5 mb-6">
                         <h3 className="text-sm font-medium text-[var(--color-text)] mb-3">
                             添加基金到持仓
                         </h3>
@@ -272,27 +258,25 @@ export default function PortfolioPage() {
                                 onKeyDown={(e) => e.key === "Enter" && addHolding()}
                                 autoFocus
                             />
-                            <Button onClick={addHolding} disabled={newCode.length !== 6}>
+                            <Button onClick={addHolding} disabled={newCode.length !== 6} className="h-9">
                                 添加
                             </Button>
-                            <Button variant="ghost" onClick={() => setShowAddDialog(false)}>
+                            <Button variant="ghost" onClick={() => setShowAddDialog(false)} className="h-9">
                                 取消
                             </Button>
                         </div>
                         <p className="text-xs text-[var(--color-text-muted)] mt-2">
-                            也可以在对话中告诉小基"我持有 005827"，记忆系统会自动记录。
+                            也可以在对话中告诉 Quinfi"我持有 005827"，记忆系统会自动记录。
                         </p>
                     </div>
                 )}
 
-                {/* Holdings */}
+                {/* 主内容 */}
                 {holdings.length === 0 && !scanning && !scanResults ? (
                     <div className="text-center py-20">
-                        <div className="text-[var(--color-text-muted)] mb-4">
-                            暂无持仓记录
-                        </div>
+                        <div className="text-[var(--color-text-muted)] mb-4">暂无持仓记录</div>
                         <div className="text-sm text-[var(--color-text-muted)] mb-6">
-                            添加基金代码、截图导入，或在对话中告诉小基你的持仓
+                            添加基金代码、截图导入，或在对话中告诉 Quinfi 你的持仓
                         </div>
                         <div className="flex gap-3 justify-center">
                             <Button
@@ -310,116 +294,92 @@ export default function PortfolioPage() {
                                 className="border-[var(--color-border)] text-[var(--color-text)]"
                                 onClick={() => navigate("/chat")}
                             >
-                                <MessageSquare className="w-4 h-4 mr-2" /> 告诉小基
+                                <MessageSquare className="w-4 h-4 mr-2" /> 告诉 Quinfi
                             </Button>
                         </div>
                     </div>
                 ) : holdings.length > 0 ? (
                     <>
-                        {/* 总资产概览 */}
+                        {/* 总资产 — 大数字直出 */}
                         {totalAmount > 0 && (
-                            <div className="bg-white rounded-xl border border-[var(--color-border)] p-6 mb-6">
-                                <div className="flex items-end justify-between mb-1">
-                                    <div>
-                                        <div className="text-xs text-[var(--color-text-muted)] mb-1">总持仓资产</div>
-                                        <div className="text-2xl font-semibold text-[var(--color-text)] tracking-tight">
-                                            {totalAmount.toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                            <span className="text-sm font-normal text-[var(--color-text-muted)] ml-1">元</span>
-                                        </div>
-                                    </div>
+                            <div className="mb-8">
+                                <div className="text-xs text-[var(--color-text-muted)] mb-1">总持仓资产</div>
+                                <div className="text-3xl font-semibold text-[var(--color-text)] tracking-tight tabular-nums">
+                                    {totalAmount.toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    <span className="text-base font-normal text-[var(--color-text-muted)] ml-1.5">元</span>
+                                </div>
+                                <div className="flex items-center gap-3 mt-1.5">
                                     {totalProfit !== 0 && (
-                                        <div className="text-right">
-                                            <div className="text-xs text-[var(--color-text-muted)]">持有收益</div>
-                                            <div className={`text-lg font-semibold ${totalProfit >= 0 ? "text-[var(--color-up)]" : "text-[var(--color-down)]"}`}>
-                                                {totalProfit >= 0 ? "+" : ""}{totalProfit.toFixed(2)}
-                                            </div>
-                                        </div>
+                                        <span className={`text-sm tabular-nums ${totalProfit >= 0 ? "text-[var(--color-up)]" : "text-[var(--color-down)]"}`}>
+                                            {totalProfit >= 0 ? "+" : ""}{totalProfit.toFixed(2)}
+                                        </span>
                                     )}
-                                </div>
-                                <div className="text-xs text-[var(--color-text-muted)] mt-1">
-                                    共 {holdings.length} 只基金
-                                </div>
-                                {/* 仓位分布条 */}
-                                <div className="flex h-2 rounded-full overflow-hidden mt-4 bg-[var(--color-sidebar-bg)]">
-                                    {holdings.map((h, i) => (
-                                        <div
-                                            key={h.code}
-                                            className="h-full transition-all"
-                                            style={{
-                                                width: `${h.weight ?? 0}%`,
-                                                backgroundColor: PALETTE[i % PALETTE.length],
-                                                opacity: 0.75,
-                                            }}
-                                        />
-                                    ))}
+                                    <span className="text-xs text-[var(--color-text-muted)]">
+                                        {holdings.length} 只基金
+                                    </span>
                                 </div>
                             </div>
                         )}
 
                         {/* 基金列表 */}
-                        <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
-                            {holdings.map((h, i) => (
+                        <div className="space-y-1">
+                            {holdings.map((h) => (
                                 <div
                                     key={h.code}
-                                    className={`group flex items-center gap-4 px-5 py-4 cursor-pointer hover:bg-[var(--color-sidebar-bg)]/50 transition-colors ${
-                                        i < holdings.length - 1 ? "border-b border-[var(--color-border)]" : ""
-                                    }`}
+                                    className="group flex items-center gap-4 px-4 py-3.5 rounded-lg cursor-pointer hover:bg-white hover:shadow-sm transition-all"
                                     onClick={() => navigate(`/fund/${h.code}`)}
                                 >
-                                    {/* 色块标识 */}
-                                    <div
-                                        className="w-1 h-10 rounded-full shrink-0"
-                                        style={{ backgroundColor: PALETTE[i % PALETTE.length], opacity: 0.7 }}
-                                    />
-
                                     {/* 基金信息 */}
                                     <div className="flex-1 min-w-0">
                                         <div className="text-sm font-medium text-[var(--color-text)] truncate">
                                             {h.name}
                                         </div>
-                                        <div className="flex items-center gap-2 mt-0.5">
-                                            <span className="text-xs text-[var(--color-text-muted)] font-mono">{h.code}</span>
-                                            {h.weight && h.weight > 0 ? (
-                                                <span className="text-xs text-[var(--color-text-muted)]">{h.weight.toFixed(1)}%</span>
-                                            ) : null}
+                                        <div className="text-xs text-[var(--color-text-muted)] font-mono mt-0.5">
+                                            {h.code}
                                         </div>
                                     </div>
 
-                                    {/* 金额 + 盈亏 */}
-                                    {h.amount && h.amount > 0 ? (
-                                        <div className="text-right shrink-0">
-                                            <div className="text-sm tabular-nums font-medium text-[var(--color-text)]">
-                                                {h.amount.toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                            </div>
-                                            {h.totalProfitRate != null && (
-                                                <div className={`text-xs tabular-nums ${(h.totalProfit ?? 0) >= 0 ? "text-[var(--color-up)]" : "text-[var(--color-down)]"}`}>
-                                                    {(h.totalProfit ?? 0) >= 0 ? "+" : ""}{(h.totalProfit ?? 0).toFixed(2)} ({(h.totalProfitRate ?? 0) >= 0 ? "+" : ""}{h.totalProfitRate.toFixed(2)}%)
+                                    {/* 右侧：金额 + 仓位标签 */}
+                                    <div className="text-right shrink-0 flex items-center gap-3">
+                                        {h.amount && h.amount > 0 ? (
+                                            <div>
+                                                <div className="text-sm tabular-nums font-medium text-[var(--color-text)]">
+                                                    {h.amount.toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </div>
-                                            )}
-                                        </div>
-                                    ) : null}
+                                                {h.totalProfitRate != null ? (
+                                                    <div className={`text-xs tabular-nums mt-0.5 ${(h.totalProfit ?? 0) >= 0 ? "text-[var(--color-up)]" : "text-[var(--color-down)]"}`}>
+                                                        {(h.totalProfitRate ?? 0) >= 0 ? "+" : ""}{(h.totalProfitRate ?? 0).toFixed(2)}%
+                                                    </div>
+                                                ) : h.weight && h.weight > 0 ? (
+                                                    <div className="text-xs text-[var(--color-text-muted)] mt-0.5">
+                                                        {h.weight.toFixed(1)}%
+                                                    </div>
+                                                ) : null}
+                                            </div>
+                                        ) : null}
 
-                                    {/* 移除按钮 */}
-                                    <button
-                                        className="shrink-0 text-xs text-[var(--color-text-muted)] opacity-0 group-hover:opacity-100 hover:text-[var(--color-down)] transition-all"
-                                        onClick={(e) => {
-                                            e.stopPropagation()
-                                            removeHolding(h.code)
-                                        }}
-                                    >
-                                        <X className="w-4 h-4" />
-                                    </button>
+                                        {/* 移除 */}
+                                        <button
+                                            className="shrink-0 p-1 rounded text-[var(--color-text-muted)] opacity-0 group-hover:opacity-100 hover:text-[var(--color-down)] hover:bg-red-50 transition-all"
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                removeHolding(h.code)
+                                            }}
+                                        >
+                                            <X className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
 
-                        <div className="flex gap-3 mt-6">
+                        <div className="mt-8">
                             <Button
                                 variant="outline"
-                                className="border-[var(--color-border)] text-[var(--color-text)] gap-2"
+                                className="border-[var(--color-border)] text-[var(--color-text)] gap-2 text-xs h-8 px-3"
                                 onClick={() => navigate("/chat")}
                             >
-                                <MessageSquare className="w-4 h-4" /> 让小基分析组合
+                                <MessageSquare className="w-3.5 h-3.5" /> 让 Quinfi 分析组合
                             </Button>
                         </div>
                     </>

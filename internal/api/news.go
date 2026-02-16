@@ -7,17 +7,18 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jay3cx/fundmind/internal/rss"
+	"github.com/jay3cx/Quinfi/internal/rss"
 )
 
 // NewsHandler 新闻 API 处理器
 type NewsHandler struct {
-	store *rss.Store
+	store     *rss.Store
+	scheduler *rss.Scheduler // 可为 nil（未启用 RSS 时）
 }
 
 // NewNewsHandler 创建新闻处理器
-func NewNewsHandler(store *rss.Store) *NewsHandler {
-	return &NewsHandler{store: store}
+func NewNewsHandler(store *rss.Store, scheduler *rss.Scheduler) *NewsHandler {
+	return &NewsHandler{store: store, scheduler: scheduler}
 }
 
 // RegisterRoutes 注册新闻相关路由
@@ -29,6 +30,12 @@ func (h *NewsHandler) RegisterRoutes(rg *gin.RouterGroup) {
 	}
 
 	rg.GET("/feeds", h.GetFeedsList)
+
+	rssGroup := rg.Group("/rss")
+	{
+		rssGroup.GET("/status", h.GetRSSStatus)
+		rssGroup.POST("/toggle", h.ToggleRSS)
+	}
 }
 
 // NewsListResponse 新闻列表响应
@@ -127,5 +134,56 @@ func (h *NewsHandler) GetFeedsList(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"data":  feeds,
 		"total": len(feeds),
+	})
+}
+
+// GetRSSStatus 获取 RSS 调度器状态
+// GET /api/v1/rss/status
+func (h *NewsHandler) GetRSSStatus(c *gin.Context) {
+	if h.scheduler == nil {
+		c.JSON(http.StatusOK, gin.H{
+			"running":    false,
+			"feed_count": 0,
+			"enabled":    false,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"running":    !h.scheduler.IsPaused(),
+		"feed_count": h.scheduler.FeedCount(),
+		"enabled":    true,
+	})
+}
+
+// ToggleRSS 切换 RSS 调度器暂停/恢复
+// POST /api/v1/rss/toggle
+func (h *NewsHandler) ToggleRSS(c *gin.Context) {
+	if h.scheduler == nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "RSS 未启用",
+		})
+		return
+	}
+
+	var req struct {
+		Enabled bool `json:"enabled"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "无效请求: " + err.Error(),
+		})
+		return
+	}
+
+	if req.Enabled {
+		h.scheduler.Resume()
+	} else {
+		h.scheduler.Pause()
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"running": !h.scheduler.IsPaused(),
+		"message": map[bool]string{true: "RSS 已恢复", false: "RSS 已暂停"}[req.Enabled],
 	})
 }

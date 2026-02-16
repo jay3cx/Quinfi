@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jay3cx/fundmind/internal/agent"
-	"github.com/jay3cx/fundmind/pkg/logger"
+	"github.com/jay3cx/Quinfi/internal/agent"
+	"github.com/jay3cx/Quinfi/pkg/logger"
 	"go.uber.org/zap"
 )
 
@@ -103,6 +103,53 @@ func (sm *SessionManager) Update(id string, msg agent.Message) bool {
 	session.LastActiveAt = time.Now()
 
 	// 持久化
+	if sm.db != nil {
+		sm.dbInsertMessage(id, msg)
+		sm.dbUpdateSessionActive(id, session.LastActiveAt)
+	}
+
+	return true
+}
+
+// UpsertLastAssistant 更新或追加最后一条 assistant 消息（仅内存）
+// 用于流式处理期间保存中间状态，让刷新后的轮询客户端能看到中间进度。
+// 不写数据库，最终持久化由 FinalizeAssistant 完成。
+func (sm *SessionManager) UpsertLastAssistant(id string, msg agent.Message) {
+	sm.mu.Lock()
+	defer sm.mu.Unlock()
+
+	session, ok := sm.sessions[id]
+	if !ok {
+		return
+	}
+
+	n := len(session.History)
+	if n > 0 && session.History[n-1].Role == "assistant" {
+		session.History[n-1] = msg // 就地替换
+	} else {
+		session.History = append(session.History, msg)
+	}
+	session.LastActiveAt = time.Now()
+}
+
+// FinalizeAssistant 完成流式处理，最终保存 assistant 消息到内存 + DB
+func (sm *SessionManager) FinalizeAssistant(id string, msg agent.Message) bool {
+	sm.mu.Lock()
+	defer sm.mu.Unlock()
+
+	session, ok := sm.sessions[id]
+	if !ok {
+		return false
+	}
+
+	n := len(session.History)
+	if n > 0 && session.History[n-1].Role == "assistant" {
+		session.History[n-1] = msg
+	} else {
+		session.History = append(session.History, msg)
+	}
+	session.LastActiveAt = time.Now()
+
 	if sm.db != nil {
 		sm.dbInsertMessage(id, msg)
 		sm.dbUpdateSessionActive(id, session.LastActiveAt)

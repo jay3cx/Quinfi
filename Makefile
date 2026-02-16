@@ -6,7 +6,7 @@ all: build
 # 编译
 build:
 	@echo "正在编译..."
-	go build -o bin/fundmind ./cmd
+	go build -o bin/quinfi ./cmd
 
 # 运行
 run:
@@ -41,7 +41,7 @@ deps:
 
 # 帮助
 help:
-	@echo "FundMind 开发命令"
+	@echo "Quinfi 开发命令"
 	@echo ""
 	@echo "使用方法:"
 	@echo "  make build   - 编译项目"

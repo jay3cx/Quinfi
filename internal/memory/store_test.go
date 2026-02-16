@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jay3cx/fundmind/internal/db"
+	"github.com/jay3cx/Quinfi/internal/db"
 )
 
 func setupTestDB(t *testing.T) *Store {

@@ -10,7 +10,7 @@ type Router struct {
 // NewRouter 创建模型路由器
 func NewRouter(baseURL, apiKey string) *Router {
 	if baseURL == "" {
-		baseURL = "http://127.0.0.1:8045"
+		baseURL = "http://localhost:8317"
 	}
 
 	return &Router{
