@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/jay3cx/fundmind/pkg/logger"
+	"github.com/jay3cx/Quinfi/pkg/logger"
 	"go.uber.org/zap"
 
 	_ "modernc.org/sqlite" // 纯 Go SQLite 驱动
@@ -141,6 +141,21 @@ CREATE TABLE IF NOT EXISTS holdings_snapshot (
 	created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_holdings_code_quarter ON holdings_snapshot(fund_code, quarter DESC);
+
+-- 异步任务表
+CREATE TABLE IF NOT EXISTS tasks (
+	id TEXT PRIMARY KEY,
+	type TEXT NOT NULL,
+	status TEXT NOT NULL DEFAULT 'pending',
+	payload TEXT NOT NULL DEFAULT '{}',
+	result TEXT NOT NULL DEFAULT '',
+	error TEXT NOT NULL DEFAULT '',
+	progress INTEGER NOT NULL DEFAULT 0,
+	progress_msg TEXT NOT NULL DEFAULT '',
+	created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	completed_at DATETIME
+);
+CREATE INDEX IF NOT EXISTS idx_tasks_type_created ON tasks(type, created_at DESC);
 `
 
 // Open 打开或创建数据库

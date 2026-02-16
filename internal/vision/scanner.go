@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/jay3cx/fundmind/pkg/llm"
-	"github.com/jay3cx/fundmind/pkg/logger"
+	"github.com/jay3cx/Quinfi/pkg/llm"
+	"github.com/jay3cx/Quinfi/pkg/logger"
 	"go.uber.org/zap"
 )
 
@@ -43,7 +43,7 @@ type Scanner struct {
 func NewScanner(client llm.Client) *Scanner {
 	return &Scanner{
 		client:   client,
-		model:    llm.ModelGemini3Flash,
+		model:    llm.ModelGemini3Flash, // Vision 需要支持多模态的模型
 		resolver: NewFundResolver(), // 异步加载 26000+ 基金代码表
 	}
 }
@@ -98,7 +98,7 @@ func (s *Scanner) ScanPortfolio(ctx context.Context, imageBase64 string) (*ScanR
 	resp, err := s.client.Chat(ctx, &llm.ChatRequest{
 		Model:       s.model,
 		Messages:    []llm.Message{msg},
-		MaxTokens:   4096,
+		MaxTokens:   0,
 		Temperature: 0.1,
 	})
 	if err != nil {

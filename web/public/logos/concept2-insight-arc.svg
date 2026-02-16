@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="c2-title">
+  <title id="c2-title">Quinfi Logo - Insight Arc</title>
+  <!-- A bold ascending arc with a spark at the peak — like a comet of insight -->
+  <path d="M80,420 C120,400 180,350 240,260 C300,170 340,110 380,80"
+        fill="none" stroke="#C96442" stroke-width="40" stroke-linecap="round"/>
+  <!-- Spark/insight dot at the peak -->
+  <circle cx="396" cy="72" r="36" fill="#C96442"/>
+  <!-- Subtle secondary arc (echo/reflection) -->
+  <path d="M140,430 C180,410 230,360 280,290 C330,220 360,175 390,150"
+        fill="none" stroke="#C96442" stroke-width="14" stroke-linecap="round" opacity="0.3"/>
+</svg>

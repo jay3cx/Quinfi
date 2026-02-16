@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="c1-title">
+  <title id="c1-title">Quinfi Logo - Growth Nodes</title>
+  <defs>
+    <style>
+      .node { fill: #C96442; }
+      .line { fill: none; stroke: #C96442; stroke-width: 18; stroke-linecap: round; }
+    </style>
+  </defs>
+  <!-- Ascending curve connecting three data nodes -->
+  <path class="line" d="M100,390 C160,370 200,310 256,256 C312,202 350,150 412,108"/>
+  <!-- Node 1: small (start of analysis) -->
+  <circle class="node" cx="112" cy="384" r="30"/>
+  <!-- Node 2: medium (processing) -->
+  <circle class="node" cx="256" cy="256" r="38"/>
+  <!-- Node 3: large (insight) -->
+  <circle class="node" cx="400" cy="116" r="48"/>
+</svg>

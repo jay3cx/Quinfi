@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jay3cx/fundmind/pkg/llm"
+	"github.com/jay3cx/Quinfi/pkg/llm"
 )
 
 // Tool Agent 可用工具接口

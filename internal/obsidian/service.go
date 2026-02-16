@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	obs "github.com/jay3cx/fundmind/pkg/obsidian"
-	"github.com/jay3cx/fundmind/pkg/logger"
+	obs "github.com/jay3cx/Quinfi/pkg/obsidian"
+	"github.com/jay3cx/Quinfi/pkg/logger"
 	"go.uber.org/zap"
 )
 
@@ -38,7 +38,7 @@ func NewService(client *obs.Client, opts ...ServiceOption) (*Service, error) {
 	s := &Service{
 		client:   client,
 		renderer: renderer,
-		basePath: "FundMind", // 默认根目录
+		basePath: "Quinfi", // 默认根目录
 	}
 
 	for _, opt := range opts {

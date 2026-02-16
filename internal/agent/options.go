@@ -1,7 +1,7 @@
 // Package agent 提供 Agent 配置选项
 package agent
 
-import "github.com/jay3cx/fundmind/pkg/llm"
+import "github.com/jay3cx/Quinfi/pkg/llm"
 
 // Options Agent 配置选项
 type Options struct {
@@ -14,8 +14,8 @@ type Options struct {
 // DefaultOptions 默认配置
 func DefaultOptions() *Options {
 	return &Options{
-		Model:       llm.ModelGemini3ProHigh,
-		MaxTokens:   4096,
+		Model:       llm.ModelGLM5,
+		MaxTokens:   0,
 		Temperature: 0.7,
 		SystemPrompt: "",
 	}

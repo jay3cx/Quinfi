@@ -1,8 +1,8 @@
 package orchestrator
 
 import (
-	"github.com/jay3cx/fundmind/internal/analyzer"
-	"github.com/jay3cx/fundmind/internal/debate"
+	"github.com/jay3cx/Quinfi/internal/analyzer"
+	"github.com/jay3cx/Quinfi/internal/debate"
 )
 
 // DeepReport 深度分析报告（汇总多 Agent 结果）
@@ -12,6 +12,7 @@ type DeepReport struct {
 	FundAnalysis  *analyzer.AnalysisReport `json:"fund_analysis"`
 	ManagerReport *analyzer.ManagerReport  `json:"manager_report,omitempty"`
 	MacroReport   *analyzer.MacroReport    `json:"macro_report,omitempty"`
-	DebateResult  *debate.DebateResult     `json:"debate_result,omitempty"`
-	GeneratedAt   string                   `json:"generated_at"`
+	RebalanceResult *analyzer.RebalanceResult `json:"rebalance_result,omitempty"`
+	DebateResult    *debate.DebateResult     `json:"debate_result,omitempty"`
+	GeneratedAt     string                   `json:"generated_at"`
 }

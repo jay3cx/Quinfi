@@ -5,12 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jay3cx/fundmind/internal/agent"
-	"github.com/jay3cx/fundmind/internal/memory"
-	"github.com/jay3cx/fundmind/pkg/logger"
+	"github.com/jay3cx/Quinfi/internal/agent"
+	"github.com/jay3cx/Quinfi/internal/memory"
+	"github.com/jay3cx/Quinfi/pkg/logger"
 	"go.uber.org/zap"
 )
 
@@ -31,11 +32,13 @@ type ChatResponse struct {
 
 // ChatHandler 对话 API 处理器
 type ChatHandler struct {
-	agent          agent.Agent
-	sessionManager *SessionManager
-	memoryStore    *memory.Store     // 可为 nil（无记忆模式）
+	agent           agent.Agent
+	sessionManager  *SessionManager
+	memoryStore     *memory.Store     // 可为 nil（无记忆模式）
 	memoryExtractor *memory.Extractor // 可为 nil
 }
+
+const agentRunTimeout = 9 * time.Minute
 
 // NewChatHandler 创建对话处理器
 func NewChatHandler(a agent.Agent, sm *SessionManager, memStore *memory.Store, memExtractor *memory.Extractor) *ChatHandler {
@@ -182,7 +185,11 @@ func (h *ChatHandler) Chat(c *gin.Context) {
 
 // handleSync 同步处理
 func (h *ChatHandler) handleSync(c *gin.Context, input *agent.AgentInput, sessionID, userMessage string) {
-	response, err := h.agent.Run(c.Request.Context(), input)
+	// 使用独立 context，避免客户端断开导致 LLM 调用中断
+	agentCtx, agentCancel := context.WithTimeout(context.Background(), agentRunTimeout)
+	defer agentCancel()
+
+	response, err := h.agent.Run(agentCtx, input)
 	if err != nil {
 		logger.Error("Agent 执行失败", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -191,7 +198,7 @@ func (h *ChatHandler) handleSync(c *gin.Context, input *agent.AgentInput, sessio
 		return
 	}
 
-	// 记录 AI 响应
+	// 无论客户端是否断开，都保存 AI 响应
 	h.sessionManager.Update(sessionID, agent.Message{
 		Role:    "assistant",
 		Content: response.Content,
@@ -216,7 +223,11 @@ func (h *ChatHandler) handleStream(c *gin.Context, input *agent.AgentInput, sess
 		SessionID: sessionID,
 	})
 
-	chunks, err := h.agent.RunStream(c.Request.Context(), input)
+	// 使用独立 context，断线后 Agent 继续执行
+	agentCtx, agentCancel := context.WithTimeout(context.Background(), agentRunTimeout)
+	defer agentCancel()
+
+	chunks, err := h.agent.RunStream(agentCtx, input)
 	if err != nil {
 		logger.Error("Agent 流式执行失败", zap.Error(err))
 		sse.WriteError("处理失败: " + err.Error())
@@ -224,17 +235,75 @@ func (h *ChatHandler) handleStream(c *gin.Context, input *agent.AgentInput, sess
 	}
 
 	var fullContent string
-	var toolCalls []map[string]string // 收集工具调用记录
+	var toolCalls []map[string]string  // 收集工具调用记录
+	var debatePhases []json.RawMessage // 收集辩论阶段数据（原始 JSON）
+	clientDisconnected := false
+
+	// SSE 心跳：每 15 秒发送注释帧，防止代理/浏览器因空闲断开连接
+	var sseMu sync.Mutex // 保护 SSE 写入的并发安全
+	heartbeatDone := make(chan struct{})
+	go func() {
+		ticker := time.NewTicker(15 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-heartbeatDone:
+				return
+			case <-ticker.C:
+				sseMu.Lock()
+				if !clientDisconnected {
+					if err := sse.WriteHeartbeat(); err != nil {
+						clientDisconnected = true
+					}
+				}
+				sseMu.Unlock()
+			}
+		}
+	}()
+
+	// buildAssistantMsg 构建当前累积的 assistant 消息（含 metadata）
+	buildAssistantMsg := func() agent.Message {
+		metaObj := make(map[string]any)
+		if len(toolCalls) > 0 {
+			metaObj["tools"] = toolCalls
+		}
+		if len(debatePhases) > 0 {
+			metaObj["debate_phases"] = debatePhases
+		}
+		metadata := ""
+		if len(metaObj) > 0 {
+			if b, err := json.Marshal(metaObj); err == nil {
+				metadata = string(b)
+			}
+		}
+		return agent.Message{
+			Role:     "assistant",
+			Content:  fullContent,
+			Metadata: metadata,
+		}
+	}
+
+	// saveIntermediate 保存中间状态到内存（仅内存，不写 DB）
+	// 即使 fullContent 为空也要保存，因为 metadata（工具调用、辩论阶段）有独立价值
+	saveIntermediate := func() {
+		if fullContent == "" && len(toolCalls) == 0 && len(debatePhases) == 0 {
+			return
+		}
+		h.sessionManager.UpsertLastAssistant(sessionID, buildAssistantMsg())
+	}
 
 	for chunk := range chunks {
-		if sse.IsClientDisconnected() {
-			logger.Info("客户端断开连接", zap.String("session_id", sessionID))
-			return
+		// 检测客户端断线，但不中断循环，继续消费 chunks
+		if !clientDisconnected && sse.IsClientDisconnected() {
+			logger.Info("客户端断开连接，Agent 继续执行", zap.String("session_id", sessionID))
+			clientDisconnected = true
 		}
 
 		if chunk.Error != nil {
-			sse.WriteError(chunk.Error.Error())
-			return
+			if !clientDisconnected {
+				sse.WriteError(chunk.Error.Error())
+			}
+			break
 		}
 
 		if chunk.Done {
@@ -254,31 +323,46 @@ func (h *ChatHandler) handleStream(c *gin.Context, input *agent.AgentInput, sess
 			})
 		}
 
-		sse.WriteSSEResponse(&SSEResponse{
-			Content:  chunk.Content,
-			Type:     string(chunk.Type),
-			ToolName: chunk.ToolName,
-		})
+		// 收集辩论阶段数据（用于持久化，刷新后可恢复）
+		if chunk.Type == agent.ChunkDebatePhase && chunk.Content != "" {
+			debatePhases = append(debatePhases, json.RawMessage(chunk.Content))
+		}
+
+		// 每个 chunk 都保存中间状态到内存，让刷新后的轮询客户端能看到最新进度
+		saveIntermediate()
+
+		// 只有客户端仍连接时才推送 SSE
+		sseMu.Lock()
+		if !clientDisconnected {
+			sse.WriteSSEResponse(&SSEResponse{
+				Content:  chunk.Content,
+				Type:     string(chunk.Type),
+				ToolName: chunk.ToolName,
+			})
+		}
+		sseMu.Unlock()
 	}
 
-	// 记录完整响应（含工具调用元数据）
-	metadata := ""
-	if len(toolCalls) > 0 {
-		if b, err := json.Marshal(toolCalls); err == nil {
-			metadata = string(b)
+	// 停止心跳
+	close(heartbeatDone)
+
+	// 无论是否断线，都保存完整响应（内存 + DB）
+	// 只要有任何数据（文本、工具调用、辩论阶段）就持久化
+	if fullContent != "" || len(toolCalls) > 0 || len(debatePhases) > 0 {
+		h.sessionManager.FinalizeAssistant(sessionID, buildAssistantMsg())
+
+		// 异步提取记忆（仅在有文本内容时）
+		if fullContent != "" {
+			h.asyncExtractMemory(userMessage, fullContent, sessionID)
 		}
 	}
-	h.sessionManager.Update(sessionID, agent.Message{
-		Role:     "assistant",
-		Content:  fullContent,
-		Metadata: metadata,
-	})
 
-	// 异步提取记忆
-	h.asyncExtractMemory(userMessage, fullContent, sessionID)
-
-	// 发送完成信号
-	sse.WriteDone()
+	// 只有客户端仍连接时发送完成信号
+	sseMu.Lock()
+	if !clientDisconnected {
+		sse.WriteDone()
+	}
+	sseMu.Unlock()
 }
 
 // asyncExtractMemory 异步提取并存储记忆

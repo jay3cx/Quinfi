@@ -1,4 +1,4 @@
-module github.com/jay3cx/fundmind
+module github.com/jay3cx/Quinfi
 
 go 1.25
 

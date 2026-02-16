@@ -3,6 +3,7 @@
 @theme {
   --font-serif: "Noto Serif SC", serif;
   --font-sans: "Inter", -apple-system, sans-serif;
+  --font-hand: "Caveat", cursive;
 
   /* Claude 配色 */
   --color-bg: #FAF9F5;
@@ -28,5 +29,8 @@
 @layer utilities {
   .font-serif {
     font-family: var(--font-serif);
+  }
+  .font-hand {
+    font-family: var(--font-hand);
   }
 }

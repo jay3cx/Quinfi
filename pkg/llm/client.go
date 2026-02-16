@@ -13,10 +13,14 @@ const (
 	ModelClaudeOpus45Thinking   ModelID = "claude-opus-4-5-thinking"
 
 	// Gemini 模型
-	ModelGemini3Flash          ModelID = "gemini-3-flash"
+	ModelGemini3Flash          ModelID = "gemini-3-flash-preview"
 	ModelGemini25Flash         ModelID = "gemini-2.5-flash"
 	ModelGemini3ProHigh        ModelID = "gemini-3-pro-high"
 	ModelGemini25FlashThinking ModelID = "gemini-2.5-flash-thinking"
+	ModelGemini3ProPreview     ModelID = "gemini-3-pro-preview"
+
+	// GLM 模型
+	ModelGLM5 ModelID = "glm-5"
 
 	// OpenAI 模型（通过 OpenAI 兼容协议访问）
 	ModelGPT4o     ModelID = "gpt-4o"
@@ -123,9 +127,10 @@ func (r *ChatResponse) HasToolCalls() bool {
 
 // StreamChunk 流式响应块
 type StreamChunk struct {
-	Content string
-	Done    bool
-	Error   error
+	Content   string
+	ToolCalls []ToolCall // 流式工具调用（流结束时汇总完整的工具调用列表）
+	Done      bool
+	Error     error
 }
 
 // Client LLM 客户端接口
@@ -150,12 +155,12 @@ const (
 func GetDefaultModel(task TaskType) ModelID {
 	switch task {
 	case TaskLight:
-		return ModelGemini3Flash
+		return ModelGLM5
 	case TaskDaily:
-		return ModelGemini3ProHigh
+		return ModelGLM5
 	case TaskDeep:
-		return ModelGemini3ProHigh
+		return ModelGLM5
 	default:
-		return ModelGemini3ProHigh
+		return ModelGLM5
 	}
 }

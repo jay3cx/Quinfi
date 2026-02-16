@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jay3cx/fundmind/internal/memory"
-	"github.com/jay3cx/fundmind/pkg/llm"
-	"github.com/jay3cx/fundmind/pkg/logger"
+	"github.com/jay3cx/Quinfi/internal/memory"
+	"github.com/jay3cx/Quinfi/pkg/llm"
+	"github.com/jay3cx/Quinfi/pkg/logger"
 	"go.uber.org/zap"
 )
 
 // WeeklyReviewTask 周度复盘任务
-// 小基自主执行：回顾本周所有对话和决策 → 评估建议准确率 → 总结经验
+// Quinfi 自主执行：回顾本周所有对话和决策 → 评估建议准确率 → 总结经验
 type WeeklyReviewTask struct {
 	client      llm.Client
 	memoryStore *memory.Store
@@ -60,7 +60,7 @@ func (t *WeeklyReviewTask) Run(ctx context.Context) error {
 		memoryText += fmt.Sprintf("- [%s] %s (创建于: %s)\n", m.Type, m.Content, m.CreatedAt.Format("2006-01-02"))
 	}
 
-	reviewPrompt := fmt.Sprintf(`你是首席投研官小基。请基于以下用户的投资记忆数据，生成本周复盘报告。
+	reviewPrompt := fmt.Sprintf(`你是首席投研官 Quinfi。请基于以下用户的投资记忆数据，生成本周复盘报告。
 
 ## 用户记忆数据
 %s
@@ -84,9 +84,9 @@ func (t *WeeklyReviewTask) Run(ctx context.Context) error {
 （本周投资一句话概括）`, memoryText, time.Now().Format("2006-01-02"))
 
 	resp, err := t.client.Chat(ctx, &llm.ChatRequest{
-		Model:       llm.ModelGemini3ProHigh,
+		Model:       llm.ModelGLM5,
 		Messages:    []llm.Message{{Role: llm.RoleUser, Content: reviewPrompt}},
-		MaxTokens:   3000,
+		MaxTokens:   0,
 		Temperature: 0.3,
 	})
 	if err != nil {

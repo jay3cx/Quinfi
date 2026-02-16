@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { LayoutDashboard, Briefcase, Plus, X, MessageSquare, PanelLeftClose, PanelLeft, Search, FlaskConical, PiggyBank, GitCompareArrows } from "lucide-react"
+import { LayoutDashboard, Briefcase, SquarePen, X, MessageSquare, PanelLeftClose, Search, FlaskConical, PiggyBank, GitCompareArrows } from "lucide-react"
 import { useLocation, useNavigate } from "react-router-dom"
 import { useSessionStore } from "@/stores/sessionStore"
 
@@ -46,17 +46,17 @@ export function Sidebar() {
             <aside className="w-[48px] shrink-0 bg-[var(--color-sidebar-bg)] h-screen flex flex-col items-center py-3 border-r border-[var(--color-border)]">
                 <button
                     onClick={toggleSidebar}
-                    className="p-2 rounded-md text-[var(--color-text-muted)] hover:bg-white/40 transition-colors mb-3"
+                    className="p-1.5 rounded-md hover:bg-white/40 transition-colors mb-3"
                     title="展开侧边栏"
                 >
-                    <PanelLeft className="w-4 h-4" />
+                    <img src="/favicon.svg" className="w-5 h-5" alt="Quinfi" />
                 </button>
                 <button
                     onClick={() => { navigate("/chat"); newChat() }}
                     className="p-2 rounded-md text-[var(--color-text-muted)] hover:bg-white/40 transition-colors mb-2"
                     title="New chat"
                 >
-                    <Plus className="w-4 h-4" />
+                    <SquarePen className="w-4 h-4" />
                 </button>
                 {navItems.map((item) => (
                     <button
@@ -86,8 +86,12 @@ export function Sidebar() {
     // 展开态
     return (
         <aside className="w-[260px] shrink-0 bg-[var(--color-sidebar-bg)] h-screen flex flex-col border-r border-[var(--color-border)]">
-            {/* 顶部：折叠 + 新建 */}
+            {/* 顶部：Logo + 折叠 */}
             <div className="flex items-center justify-between px-3 py-3">
+                <div className="flex items-center gap-2 px-1.5">
+                    <img src="/favicon.svg" className="w-5 h-5" alt="Quinfi" />
+                    <span className="text-sm font-semibold text-[var(--color-text)]">Quinfi</span>
+                </div>
                 <button
                     onClick={toggleSidebar}
                     className="p-1.5 rounded-md text-[var(--color-text-muted)] hover:bg-white/40 transition-colors"
@@ -95,17 +99,17 @@ export function Sidebar() {
                 >
                     <PanelLeftClose className="w-4 h-4" />
                 </button>
-                <button
-                    onClick={() => { navigate("/chat"); newChat() }}
-                    className="p-1.5 rounded-md text-[var(--color-text-muted)] hover:bg-white/40 transition-colors"
-                    title="New chat"
-                >
-                    <Plus className="w-4 h-4" />
-                </button>
             </div>
 
             {/* 导航 */}
             <nav className="px-3 space-y-0.5 mb-2">
+                <button
+                    onClick={() => { navigate("/chat"); newChat() }}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-md transition-colors text-sm text-[var(--color-text-secondary)] hover:bg-white/30"
+                >
+                    <SquarePen className="w-4 h-4" />
+                    New Session
+                </button>
                 {navItems.map((item) => {
                     const isActive = location.pathname.startsWith(item.path)
                     return (
@@ -201,16 +205,6 @@ export function Sidebar() {
             )}
 
             {!showRecents && <div className="flex-1" />}
-
-            {/* 底部用户 */}
-            <div className="px-3 py-4 border-t border-[var(--color-border)]">
-                <div className="flex items-center gap-3 px-2">
-                    <div className="w-7 h-7 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white text-xs font-medium">
-                        J
-                    </div>
-                    <div className="text-sm text-[var(--color-text-secondary)]">Jay</div>
-                </div>
-            </div>
         </aside>
     )
 }

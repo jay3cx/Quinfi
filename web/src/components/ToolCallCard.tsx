@@ -9,6 +9,7 @@ const TOOL_NAMES: Record<string, string> = {
     get_fund_ranking: "获取基金排行榜",
     get_portfolio: "读取持仓组合",
     run_debate: "发起多空辩论",
+    detect_rebalance: "检测调仓变动",
 }
 
 interface ToolCallCardProps {

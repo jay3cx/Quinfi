@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img">
+  <title>Quinfi Icon - Insight Lens</title>
+  <rect width="512" height="512" rx="112" fill="#C96442"/>
+  <!-- Outer lens ring -->
+  <path d="M72,256 C72,152 152,72 256,72 C360,72 440,152 440,256 C440,360 360,440 256,440 C152,440 72,360 72,256Z"
+        fill="none" stroke="white" stroke-width="28"/>
+  <!-- Inner diamond -->
+  <path d="M256,156 L332,256 L256,356 L180,256Z" fill="white"/>
+  <!-- Center -->
+  <circle cx="256" cy="256" r="26" fill="#C96442"/>
+</svg>

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jay3cx/fundmind/internal/datasource"
+	"github.com/jay3cx/Quinfi/internal/datasource"
 )
 
 // FundRepository 基金数据持久化

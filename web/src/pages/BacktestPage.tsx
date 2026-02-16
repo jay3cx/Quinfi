@@ -172,12 +172,12 @@ export default function BacktestPage() {
                         </div>
 
                         {/* 净值曲线 */}
-                        {result.nav_curve?.length > 0 ? (
+                        {result.equity_curve?.length > 0 ? (
                             <Card>
                                 <CardHeader><CardTitle className="text-lg">净值曲线</CardTitle></CardHeader>
                                 <CardContent>
                                     <ResponsiveContainer width="100%" height={320}>
-                                        <LineChart data={result.nav_curve}>
+                                        <LineChart data={result.equity_curve}>
                                             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                                             <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={d => d.slice(5)} />
                                             <YAxis tick={{ fontSize: 11 }} />
@@ -216,21 +216,17 @@ export default function BacktestPage() {
                                         <table className="w-full text-sm">
                                             <thead>
                                                 <tr className="border-b text-left text-slate-500">
-                                                    <th className="pb-2 pr-4">基金</th>
-                                                    <th className="pb-2 pr-4">累计收益</th>
-                                                    <th className="pb-2 pr-4">年化收益</th>
-                                                    <th className="pb-2 pr-4">最大回撤</th>
-                                                    <th className="pb-2">夏普</th>
+                                                    <th className="pb-2 pr-4">基金代码</th>
+                                                    <th className="pb-2 pr-4">权重</th>
+                                                    <th className="pb-2">累计收益</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {result.fund_metrics.map(f => (
-                                                    <tr key={f.code} className="border-b border-slate-100">
-                                                        <td className="py-2 pr-4 font-medium">{f.name}({f.code})</td>
-                                                        <td className={`py-2 pr-4 ${f.total_return >= 0 ? "text-[var(--color-up)]" : "text-[var(--color-down)]"}`}>{(f.total_return * 100).toFixed(2)}%</td>
-                                                        <td className={`py-2 pr-4 ${f.annual_return >= 0 ? "text-[var(--color-up)]" : "text-[var(--color-down)]"}`}>{(f.annual_return * 100).toFixed(2)}%</td>
-                                                        <td className="py-2 pr-4 text-[var(--color-down)]">{(f.max_drawdown * 100).toFixed(2)}%</td>
-                                                        <td className="py-2">{f.sharpe_ratio.toFixed(3)}</td>
+                                                    <tr key={f.fund_code} className="border-b border-slate-100">
+                                                        <td className="py-2 pr-4 font-medium font-mono">{f.fund_code}</td>
+                                                        <td className="py-2 pr-4">{(f.weight * 100).toFixed(0)}%</td>
+                                                        <td className={`py-2 ${f.total_return >= 0 ? "text-[var(--color-up)]" : "text-[var(--color-down)]"}`}>{(f.total_return * 100).toFixed(2)}%</td>
                                                     </tr>
                                                 ))}
                                             </tbody>

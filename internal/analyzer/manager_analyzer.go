@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/jay3cx/fundmind/internal/datasource"
-	"github.com/jay3cx/fundmind/pkg/llm"
-	"github.com/jay3cx/fundmind/pkg/logger"
+	"github.com/jay3cx/Quinfi/internal/datasource"
+	"github.com/jay3cx/Quinfi/pkg/llm"
+	"github.com/jay3cx/Quinfi/pkg/logger"
 	"go.uber.org/zap"
 )
 
@@ -71,7 +71,7 @@ func (a *DefaultManagerAnalyzer) AnalyzeManager(ctx context.Context, code string
 	resp, err := a.llmClient.Chat(ctx, &llm.ChatRequest{
 		Model:       llm.GetDefaultModel(llm.TaskDaily),
 		Messages:    []llm.Message{{Role: llm.RoleUser, Content: prompt}},
-		MaxTokens:   2048,
+		MaxTokens:   0,
 		Temperature: 0.3,
 	})
 	if err != nil {

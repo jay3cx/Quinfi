@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jay3cx/fundmind/pkg/llm"
-	"github.com/jay3cx/fundmind/pkg/logger"
+	"github.com/jay3cx/Quinfi/pkg/llm"
+	"github.com/jay3cx/Quinfi/pkg/logger"
 	"go.uber.org/zap"
 )
 
@@ -54,7 +54,7 @@ func (a *DefaultMacroAnalyzer) AnalyzeMacro(ctx context.Context, fundName string
 	resp, err := a.llmClient.Chat(ctx, &llm.ChatRequest{
 		Model:       llm.GetDefaultModel(llm.TaskDaily),
 		Messages:    []llm.Message{{Role: llm.RoleUser, Content: prompt}},
-		MaxTokens:   2048,
+		MaxTokens:   0,
 		Temperature: 0.3,
 	})
 	if err != nil {

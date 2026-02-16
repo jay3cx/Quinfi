@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img">
+  <title>Quinfi - Sunburst</title>
+  <!-- Claude-style radiating petals from center -->
+  <g fill="#C96442">
+    <!-- Center circle -->
+    <circle cx="256" cy="256" r="48"/>
+    <!-- 8 petals radiating outward -->
+    <!-- Top (0°) -->
+    <ellipse cx="256" cy="136" rx="22" ry="72"/>
+    <!-- Top-right (45°) -->
+    <ellipse cx="341" cy="171" rx="22" ry="72" transform="rotate(45 341 171)"/>
+    <!-- Right (90°) -->
+    <ellipse cx="376" cy="256" rx="22" ry="72" transform="rotate(90 376 256)"/>
+    <!-- Bottom-right (135°) -->
+    <ellipse cx="341" cy="341" rx="22" ry="72" transform="rotate(135 341 341)"/>
+    <!-- Bottom (180°) -->
+    <ellipse cx="256" cy="376" rx="22" ry="72"/>
+    <!-- Bottom-left (225°) -->
+    <ellipse cx="171" cy="341" rx="22" ry="72" transform="rotate(45 171 341)"/>
+    <!-- Left (270°) -->
+    <ellipse cx="136" cy="256" rx="22" ry="72" transform="rotate(90 136 256)"/>
+    <!-- Top-left (315°) -->
+    <ellipse cx="171" cy="171" rx="22" ry="72" transform="rotate(135 171 171)"/>
+  </g>
+</svg>

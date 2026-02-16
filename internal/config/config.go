@@ -17,6 +17,7 @@ type Config struct {
 	DB      DBConfig      `yaml:"db"`
 	Session SessionConfig `yaml:"session"`
 	RSS     RSSConfig     `yaml:"rss"`
+	Debate  DebateConfig  `yaml:"debate"`
 }
 
 // RSSFeedConfig 单个 RSS 订阅源配置
@@ -30,6 +31,18 @@ type RSSFeedConfig struct {
 type RSSConfig struct {
 	Enabled bool            `yaml:"enabled"` // 是否启用 RSS 抓取
 	Feeds   []RSSFeedConfig `yaml:"feeds"`   // 订阅源列表
+}
+
+// DebateConfidenceConfig 多空辩论置信度门控阈值配置
+type DebateConfidenceConfig struct {
+	ReviewThreshold int `yaml:"review_threshold"` // 低于该值触发复核
+	PassThreshold   int `yaml:"pass_threshold"`   // 终判通过阈值
+	HardCap         int `yaml:"hard_cap"`         // 硬规则命中时分数封顶
+}
+
+// DebateConfig 多空辩论配置
+type DebateConfig struct {
+	Confidence DebateConfidenceConfig `yaml:"confidence"`
 }
 
 // GetFeedInterval 解析 RSS 订阅源的抓取间隔
@@ -97,12 +110,12 @@ func DefaultConfig() *Config {
 			Env:   "development",
 		},
 		LLM: LLMConfig{
-			BaseURL:    "http://127.0.0.1:8045/v1",
+			BaseURL:    "http://localhost:8317/v1",
 			APIKey:     "",
 			MaxRetries: 2,
 		},
 		DB: DBConfig{
-			Path: "data/fundmind.db",
+			Path: "data/quinfi.db",
 		},
 		Session: SessionConfig{
 			TTL: "24h",
@@ -118,6 +131,13 @@ func DefaultConfig() *Config {
 				// 宏观经济
 				{URL: "https://feedx.net/rss/jingjiribao.xml", Name: "经济日报", Interval: "30m"},
 				{URL: "https://feedx.net/rss/nikkei.xml", Name: "日经中文网", Interval: "30m"},
+			},
+		},
+		Debate: DebateConfig{
+			Confidence: DebateConfidenceConfig{
+				ReviewThreshold: 70,
+				PassThreshold:   75,
+				HardCap:         60,
 			},
 		},
 	}
@@ -139,6 +159,18 @@ func (c *Config) Validate() error {
 	if c.LLM.MaxRetries < 0 {
 		return fmt.Errorf("llm.max_retries 不能为负数")
 	}
+	if c.Debate.Confidence.ReviewThreshold < 1 || c.Debate.Confidence.ReviewThreshold > 100 {
+		return fmt.Errorf("debate.confidence.review_threshold 需在 1-100")
+	}
+	if c.Debate.Confidence.PassThreshold < 1 || c.Debate.Confidence.PassThreshold > 100 {
+		return fmt.Errorf("debate.confidence.pass_threshold 需在 1-100")
+	}
+	if c.Debate.Confidence.HardCap < 1 || c.Debate.Confidence.HardCap > 100 {
+		return fmt.Errorf("debate.confidence.hard_cap 需在 1-100")
+	}
+	if c.Debate.Confidence.ReviewThreshold >= c.Debate.Confidence.PassThreshold {
+		return fmt.Errorf("debate.confidence.review_threshold 必须小于 pass_threshold")
+	}
 	return nil
 }
 
@@ -146,7 +178,12 @@ func (c *Config) Validate() error {
 func Load(path string) (*Config, error) {
 	cfg := DefaultConfig()
 
-	// 尝试从文件加载
+	// 尝试从文件加载：未指定路径时自动查找当前目录 config.yaml
+	if path == "" {
+		if _, err := os.Stat("config.yaml"); err == nil {
+			path = "config.yaml"
+		}
+	}
 	if path != "" {
 		data, err := os.ReadFile(path)
 		if err == nil {
@@ -157,13 +194,13 @@ func Load(path string) (*Config, error) {
 	}
 
 	// 环境变量覆盖
-	if port := os.Getenv("FUNDMIND_PORT"); port != "" {
+	if port := os.Getenv("QUINFI_PORT"); port != "" {
 		cfg.Server.Port = port
 	}
-	if mode := os.Getenv("FUNDMIND_MODE"); mode != "" {
+	if mode := os.Getenv("QUINFI_MODE"); mode != "" {
 		cfg.Server.Mode = mode
 	}
-	if env := os.Getenv("FUNDMIND_ENV"); env != "" {
+	if env := os.Getenv("QUINFI_ENV"); env != "" {
 		cfg.Log.Env = env
 	}
 
@@ -176,7 +213,7 @@ func Load(path string) (*Config, error) {
 	}
 
 	// DB 配置环境变量覆盖
-	if dbPath := os.Getenv("FUNDMIND_DB_PATH"); dbPath != "" {
+	if dbPath := os.Getenv("QUINFI_DB_PATH"); dbPath != "" {
 		cfg.DB.Path = dbPath
 	}
 

@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jay3cx/fundmind/internal/datasource"
-	"github.com/jay3cx/fundmind/internal/rss"
+	"github.com/jay3cx/Quinfi/internal/datasource"
+	"github.com/jay3cx/Quinfi/internal/rss"
 )
 
 // ===== GetFundInfo 工具 =====
@@ -280,7 +280,7 @@ type RunDebateTool struct {
 
 // debateRunner 辩论编排器接口（解耦 debate 包的直接依赖）
 type debateRunner interface {
-	RunDebate(ctx context.Context, fundCode string) (formattedResult string, err error)
+	RunDebate(ctx context.Context, fundCode string, onPhase ...func(phaseJSON string)) (formattedResult string, err error)
 }
 
 func NewRunDebateTool(runner debateRunner) *RunDebateTool {
@@ -310,6 +310,17 @@ func (t *RunDebateTool) Execute(ctx context.Context, args map[string]any) (strin
 	code := getStringArg(args, "code")
 	if code == "" {
 		return "", fmt.Errorf("基金代码不能为空")
+	}
+
+	// 如果有流式进度回调（RunStream 模式），传递给辩论编排器
+	if progressFn := ToolProgressFromContext(ctx); progressFn != nil {
+		return t.orchestrator.RunDebate(ctx, code, func(phaseJSON string) {
+			progressFn(StreamChunk{
+				Type:     ChunkDebatePhase,
+				ToolName: "run_debate",
+				Content:  phaseJSON,
+			})
+		})
 	}
 
 	return t.orchestrator.RunDebate(ctx, code)
@@ -514,6 +525,49 @@ func sortByLabel(s string) string {
 	default:
 		return s
 	}
+}
+
+// ===== DetectRebalance 工具 =====
+
+// rebalanceDetector 调仓检测接口（解耦 analyzer 包）
+type rebalanceDetector interface {
+	DetectRebalance(ctx context.Context, code string) (string, error)
+}
+
+// DetectRebalanceTool 调仓检测工具
+type DetectRebalanceTool struct {
+	detector rebalanceDetector
+}
+
+func NewDetectRebalanceTool(detector rebalanceDetector) *DetectRebalanceTool {
+	return &DetectRebalanceTool{detector: detector}
+}
+
+func (t *DetectRebalanceTool) Name() string { return "detect_rebalance" }
+
+func (t *DetectRebalanceTool) Description() string {
+	return "检测基金的调仓变动，对比上期和本期持仓差异，分析基金经理的调仓方向和意图。输入6位基金代码。"
+}
+
+func (t *DetectRebalanceTool) Parameters() map[string]any {
+	return map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"code": map[string]any{
+				"type":        "string",
+				"description": "6位基金代码，如 005827",
+			},
+		},
+		"required": []string{"code"},
+	}
+}
+
+func (t *DetectRebalanceTool) Execute(ctx context.Context, args map[string]any) (string, error) {
+	code := getStringArg(args, "code")
+	if code == "" {
+		return "", fmt.Errorf("基金代码不能为空")
+	}
+	return t.detector.DetectRebalance(ctx, code)
 }
 
 // ===== GetPortfolio 工具 =====

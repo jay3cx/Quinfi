@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/jay3cx/fundmind/internal/datasource"
+	"github.com/jay3cx/Quinfi/internal/datasource"
 )
 
 func TestFundRepository_HoldingsSnapshot(t *testing.T) {

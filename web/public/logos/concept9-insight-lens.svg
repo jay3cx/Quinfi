@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img">
+  <title>Quinfi - Insight Lens</title>
+  <!-- Outer lens/eye shape: two smooth arcs forming an almond -->
+  <path d="M56,256 C56,144 148,56 256,56 C364,56 456,144 456,256 C456,368 364,456 256,456 C148,456 56,368 56,256Z"
+        fill="none" stroke="#C96442" stroke-width="32"/>
+  <!-- Inner diamond: represents value/insight -->
+  <path d="M256,148 L336,256 L256,364 L176,256Z" fill="#C96442"/>
+  <!-- Center highlight -->
+  <circle cx="256" cy="256" r="28" fill="#FAF9F5"/>
+</svg>

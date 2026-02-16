@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jay3cx/fundmind/internal/memory"
+	"github.com/jay3cx/Quinfi/internal/memory"
 )
 
 // Holding 单只持仓
@@ -53,9 +53,9 @@ func (m *Manager) GetPortfolio(ctx context.Context, userID string) (*Portfolio, 
 		return nil, fmt.Errorf("获取持仓记忆失败: %w", err)
 	}
 
-	var holdings []Holding
-	seen := make(map[string]bool)
-	totalValue := 0.0
+	// 合并同一基金的多条记忆（取最佳数据）
+	holdingMap := make(map[string]*Holding) // code → merged holding
+	var order []string                      // 保持首次出现顺序
 
 	for _, mem := range memories {
 		if mem.Type != memory.TypeFact {
@@ -65,13 +65,39 @@ func (m *Manager) GetPortfolio(ctx context.Context, userID string) (*Portfolio, 
 			continue
 		}
 
-		// 从记忆文本中提取基金代码、名称和金额
 		h := parseHoldingFromMemory(mem.Content)
-		if h != nil && !seen[h.Code] {
-			holdings = append(holdings, *h)
-			seen[h.Code] = true
-			totalValue += h.Amount
+		if h == nil {
+			continue
 		}
+
+		existing, seen := holdingMap[h.Code]
+		if !seen {
+			holdingMap[h.Code] = h
+			order = append(order, h.Code)
+		} else {
+			// 合并：取较大金额、填补空字段
+			if h.Amount > existing.Amount {
+				existing.Amount = h.Amount
+			}
+			if existing.Name == "" && h.Name != "" {
+				existing.Name = h.Name
+			}
+			if h.TotalProfit != 0 && existing.TotalProfit == 0 {
+				existing.TotalProfit = h.TotalProfit
+			}
+			if h.TotalProfitRate != 0 && existing.TotalProfitRate == 0 {
+				existing.TotalProfitRate = h.TotalProfitRate
+			}
+		}
+	}
+
+	// 按首次出现顺序输出
+	holdings := make([]Holding, 0, len(order))
+	totalValue := 0.0
+	for _, code := range order {
+		h := holdingMap[code]
+		holdings = append(holdings, *h)
+		totalValue += h.Amount
 	}
 
 	// 计算仓位比例

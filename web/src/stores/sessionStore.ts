@@ -3,6 +3,7 @@ import { getSessions, deleteSession as apiDeleteSession } from "@/lib/api"
 
 export interface ChatSession {
   id: string
+  backendId?: string // 后端真实 session UUID（删除/API 调用时使用）
   title: string
   createdAt: string
 }
@@ -26,7 +27,7 @@ interface SessionState {
 
 export const useSessionStore = create<SessionState>((set) => ({
   sessions: [],
-  activeSessionId: "new",
+  activeSessionId: localStorage.getItem("active_session_id") || "new",
   sidebarCollapsed: localStorage.getItem("sidebar_collapsed") === "true",
   recentsVisible: localStorage.getItem("recents_visible") !== "false",
 
@@ -37,6 +38,7 @@ export const useSessionStore = create<SessionState>((set) => ({
         set({
           sessions: res.data.map((s) => ({
             id: s.id,
+            backendId: s.id, // 从后端加载的会话，id 就是后端 UUID
             title: s.title,
             createdAt: s.last_active_at,
           })),
@@ -48,11 +50,14 @@ export const useSessionStore = create<SessionState>((set) => ({
   },
 
   setActiveSessionId: (id: string) => {
+    localStorage.setItem("active_session_id", id)
     set({ activeSessionId: id })
   },
 
   newChat: () => {
-    set({ activeSessionId: "new-" + Date.now() })
+    const id = "new-" + Date.now()
+    localStorage.setItem("active_session_id", id)
+    set({ activeSessionId: id })
   },
 
   addSession: (session: ChatSession) => {
@@ -63,13 +68,19 @@ export const useSessionStore = create<SessionState>((set) => ({
   },
 
   deleteSession: (id: string) => {
-    apiDeleteSession(id).catch(() => {})
     set((state) => {
+      // 用 backendId（后端真实 UUID）发 DELETE 请求
+      const session = state.sessions.find((s) => s.id === id)
+      const apiId = session?.backendId || id
+      apiDeleteSession(apiId).catch(() => {})
+
       const next: Partial<SessionState> = {
         sessions: state.sessions.filter((s) => s.id !== id),
       }
       if (state.activeSessionId === id) {
-        next.activeSessionId = "new-" + Date.now()
+        const newId = "new-" + Date.now()
+        localStorage.setItem("active_session_id", newId)
+        next.activeSessionId = newId
       }
       return next
     })

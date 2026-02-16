@@ -69,13 +69,22 @@ func (m *MockClient) Reset() {
 	m.calls = m.calls[:0]
 }
 
-// WithResponse 设置固定文本响应
+// WithResponse 设置固定文本响应（同时设置 Chat 和 ChatStream）
 func (m *MockClient) WithResponse(content string) *MockClient {
 	m.ChatFunc = func(ctx context.Context, req *ChatRequest) (*ChatResponse, error) {
 		return &ChatResponse{
 			Content: content,
 			Model:   string(req.Model),
 		}, nil
+	}
+	m.ChatStreamFunc = func(ctx context.Context, req *ChatRequest) (<-chan StreamChunk, error) {
+		ch := make(chan StreamChunk, 2)
+		go func() {
+			defer close(ch)
+			ch <- StreamChunk{Content: content}
+			ch <- StreamChunk{Done: true}
+		}()
+		return ch, nil
 	}
 	return m
 }

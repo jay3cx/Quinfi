@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="c2i-title">
+  <title id="c2i-title">Quinfi Icon - Insight Arc</title>
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#D4845F"/>
+      <stop offset="100%" stop-color="#C96442"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg2)"/>
+  <!-- Bold ascending arc -->
+  <path d="M96,410 C136,388 192,336 248,252 C304,168 344,116 384,86"
+        fill="none" stroke="white" stroke-width="38" stroke-linecap="round"/>
+  <!-- Spark dot -->
+  <circle cx="398" cy="78" r="34" fill="white"/>
+  <!-- Echo arc -->
+  <path d="M148,424 C188,404 234,358 282,288 C330,218 360,176 392,150"
+        fill="none" stroke="white" stroke-width="14" stroke-linecap="round" opacity="0.35"/>
+</svg>
