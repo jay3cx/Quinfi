@@ -8,9 +8,8 @@ type ModelID string
 
 const (
 	// Claude 模型
-	ModelClaudeSonnet45         ModelID = "claude-sonnet-4-5"
-	ModelClaudeSonnet45Thinking ModelID = "claude-sonnet-4-5-thinking"
-	ModelClaudeOpus45Thinking   ModelID = "claude-opus-4-5-thinking"
+	ModelClaudeSonnet46 ModelID = "claude-sonnet-4-6"         // Sonnet 4.6 (Thinking)
+	ModelClaudeOpus46   ModelID = "claude-opus-4-6-thinking"  // Opus 4.6 (Thinking)
 
 	// Gemini 模型
 	ModelGemini3Flash          ModelID = "gemini-3-flash-preview"
@@ -18,9 +17,6 @@ const (
 	ModelGemini3ProHigh        ModelID = "gemini-3-pro-high"
 	ModelGemini25FlashThinking ModelID = "gemini-2.5-flash-thinking"
 	ModelGemini3ProPreview     ModelID = "gemini-3-pro-preview"
-
-	// GLM 模型
-	ModelGLM5 ModelID = "glm-5"
 
 	// OpenAI 模型（通过 OpenAI 兼容协议访问）
 	ModelGPT4o     ModelID = "gpt-4o"
@@ -155,12 +151,12 @@ const (
 func GetDefaultModel(task TaskType) ModelID {
 	switch task {
 	case TaskLight:
-		return ModelGLM5
+		return ModelClaudeSonnet46
 	case TaskDaily:
-		return ModelGLM5
+		return ModelClaudeSonnet46
 	case TaskDeep:
-		return ModelGLM5
+		return ModelClaudeOpus46
 	default:
-		return ModelGLM5
+		return ModelClaudeSonnet46
 	}
 }

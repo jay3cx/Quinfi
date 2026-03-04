@@ -244,8 +244,8 @@ func createToolRegistry(cachedDS *datasource.CachedDataSource, emClient *eastmon
 	toolRegistry.Register(agent.NewGetNAVHistoryTool(cachedDS))
 	toolRegistry.Register(agent.NewGetFundHoldingsTool(cachedDS))
 
-	// 新闻搜索
-	toolRegistry.Register(agent.NewSearchNewsTool(rssStore))
+	// 新闻搜索（传入 datasource 以支持基金代码 → 重仓股 Query Expansion）
+	toolRegistry.Register(agent.NewSearchNewsTool(rssStore, cachedDS))
 
 	// 基金搜索 + 排行榜（对接东方财富真实 API）
 	toolRegistry.Register(agent.NewSearchFundsTool(&eastmoneySearchAdapter{client: emClient}))
