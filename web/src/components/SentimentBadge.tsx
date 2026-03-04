@@ -3,9 +3,9 @@ interface SentimentBadgeProps {
 }
 
 const config: Record<string, { label: string; className: string }> = {
-    positive: { label: "利好", className: "bg-green-50 text-[var(--color-up)]" },
-    negative: { label: "利空", className: "bg-red-50 text-[var(--color-down)]" },
-    neutral: { label: "中性", className: "bg-gray-50 text-[var(--color-text-muted)]" },
+    positive: { label: "利好", className: "bg-[var(--color-up)]/[0.06] text-[var(--color-up)]" },
+    negative: { label: "利空", className: "bg-[var(--color-down)]/[0.06] text-[var(--color-down)]" },
+    neutral: { label: "中性", className: "bg-[var(--color-sidebar-bg)]/30 text-[var(--color-text-muted)]" },
 }
 
 export function SentimentBadge({ sentiment }: SentimentBadgeProps) {

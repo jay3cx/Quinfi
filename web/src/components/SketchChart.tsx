@@ -134,7 +134,7 @@ export function SketchChart({
 
             // 标签
             ctx.font = '11px "Inter", sans-serif'
-            ctx.fillStyle = "#94a3b8"
+            ctx.fillStyle = "#9B9590"
             ctx.textAlign = "center"
 
             // X 轴标签 — 均匀分布几个
@@ -205,7 +205,7 @@ export function SketchChart({
                         style={{
                             left: hover.dataX,
                             height: height - 50,
-                            borderLeft: "1px dashed #cbd5e1",
+                            borderLeft: "1px dashed #E8E5DE",
                         }}
                     />
 

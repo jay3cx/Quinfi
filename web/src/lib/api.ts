@@ -84,20 +84,20 @@ export const deleteSession = (id: string) =>
 export interface PortfolioHolding {
   code: string
   name: string
+  shares: number
+  cost: number
   amount: number
   weight: number
-  total_profit?: number
-  total_profit_rate?: number
 }
 
 export const getPortfolio = () =>
   apiFetch<{ data: PortfolioHolding[]; total: number; total_value?: number }>("/portfolio")
 
-export const addPortfolioHolding = (code: string, name?: string, amount?: number) =>
+export const addPortfolioHolding = (code: string, name?: string, shares?: number, cost?: number) =>
   fetch(`${API_BASE}/portfolio`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ code, name, amount }),
+    body: JSON.stringify({ code, name, shares, cost }),
   }).then((res) => {
     if (!res.ok) throw new Error("添加持仓失败")
     return res.json() as Promise<{ status: string; code: string }>
@@ -117,7 +117,7 @@ export const scanPortfolio = (imageBase64: string, autoAdd = false) =>
 export const removePortfolioHolding = (code: string) =>
   fetch(`${API_BASE}/portfolio/${code}`, { method: "DELETE" }).then((res) => {
     if (!res.ok) throw new Error("删除持仓失败")
-    return res.json() as Promise<{ status: string; invalidated: number }>
+    return res.json() as Promise<{ status: string }>
   })
 
 // 简报

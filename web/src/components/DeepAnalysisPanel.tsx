@@ -32,9 +32,9 @@ function Section({ title, icon, children, defaultOpen = false }: {
 function Tag({ children, variant = "default" }: { children: React.ReactNode; variant?: "default" | "up" | "down" | "warn" }) {
     const colors = {
         default: "bg-[var(--color-sidebar-bg)] text-[var(--color-text-secondary)]",
-        up: "bg-green-50 text-[var(--color-up)]",
-        down: "bg-red-50 text-[var(--color-down)]",
-        warn: "bg-amber-50 text-amber-700",
+        up: "bg-[var(--color-up)]/[0.06] text-[var(--color-up)]",
+        down: "bg-[var(--color-down)]/[0.06] text-[var(--color-down)]",
+        warn: "bg-[var(--color-warn)]/[0.06] text-[var(--color-warn)]",
     }
     return <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${colors[variant]}`}>{children}</span>
 }
@@ -83,10 +83,10 @@ export function DeepAnalysisPanel({ report }: DeepAnalysisPanelProps) {
 
                     {/* 风险评估 */}
                     {report.fund_analysis.risk_assessment && (
-                        <div className="mb-4 p-3 rounded-lg bg-amber-50/50 border border-amber-200/50">
+                        <div className="mb-4 p-3 rounded-lg bg-[var(--color-warn)]/[0.06] border border-[var(--color-warn)]/20">
                             <div className="flex items-center gap-2 mb-2">
-                                <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
-                                <span className="text-sm font-medium text-amber-700">风险评估</span>
+                                <AlertTriangle className="w-3.5 h-3.5 text-[var(--color-warn)]" />
+                                <span className="text-sm font-medium text-[var(--color-warn)]">风险评估</span>
                                 <Tag variant="warn">{`风险等级: ${report.fund_analysis.risk_assessment.risk_level}`}</Tag>
                             </div>
                             <div className="text-xs text-[var(--color-text-secondary)] space-y-1">
@@ -221,7 +221,7 @@ export function DeepAnalysisPanel({ report }: DeepAnalysisPanelProps) {
                     )}
                     {report.macro_report.risk_factors.length > 0 && (
                         <div>
-                            <div className="text-xs font-medium text-amber-600 mb-1">风险因素</div>
+                            <div className="text-xs font-medium text-[var(--color-warn)] mb-1">风险因素</div>
                             <ul className="text-xs text-[var(--color-text-secondary)] space-y-1 ml-4 list-disc">
                                 {report.macro_report.risk_factors.map((r, i) => <li key={i}>{r}</li>)}
                             </ul>

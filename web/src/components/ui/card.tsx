@@ -38,7 +38,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
                 rc.rectangle(2, 2, w - 4, h - 4, {
                     roughness: 1.2,
                     bowing: 1.5,
-                    stroke: "#cbd5e1", // slate-300
+                    stroke: "#E8E5DE", // --color-border
                     strokeWidth: 1.5,
                     disableMultiStroke: false,
                 })
@@ -57,8 +57,8 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
                 <div
                     ref={containerRef}
                     className={cn(
-                        "relative rounded-lg bg-white text-slate-950 shadow-sm",
-                        variant === "default" && "border border-slate-200",
+                        "relative rounded-lg bg-white text-[var(--color-text)] shadow-sm",
+                        variant === "default" && "border border-[var(--color-border)]",
                         variant === "sketchy" && "bg-white/80 backdrop-blur-sm", // Slight transparency for cool effect
                         className
                     )}
@@ -115,7 +115,7 @@ const CardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
     <p
         ref={ref}
-        className={cn("text-sm text-slate-500", className)}
+        className={cn("text-sm text-[var(--color-text-secondary)]", className)}
         {...props}
     />
 ))

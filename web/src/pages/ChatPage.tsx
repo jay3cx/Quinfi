@@ -95,11 +95,13 @@ export default function ChatPage() {
 
     const currentData = sessionDataMap[activeSessionId] || { messages: [WELCOME_MSG] }
     const messages = currentData.messages
+    const hasConversation = messages.length > 1 || (messages.length === 1 && messages[0].id !== "welcome")
 
     // 只在用户已经在底部附近时才自动滚动（避免轮询更新打断阅读）
     // programmaticScroll 标记：区分程序化滚动和用户手动滚动，防止竞态
     const isNearBottomRef = useRef(true)
     const programmaticScrollRef = useRef(false)
+    // 滚动容器按 hasConversation 条件渲染；依赖它可确保容器出现后绑定监听
     useEffect(() => {
         const el = scrollRef.current
         if (!el) return
@@ -110,7 +112,7 @@ export default function ChatPage() {
         }
         el.addEventListener("scroll", onScroll, { passive: true })
         return () => el.removeEventListener("scroll", onScroll)
-    }, [])
+    }, [hasConversation])
 
     useEffect(() => {
         if (isNearBottomRef.current && scrollRef.current) {
@@ -565,8 +567,6 @@ export default function ChatPage() {
             handleSend()
         }
     }
-
-    const hasConversation = messages.length > 1 || (messages.length === 1 && messages[0].id !== "welcome")
 
     // 图片预览条组件
     const ImagePreviewBar = () => {

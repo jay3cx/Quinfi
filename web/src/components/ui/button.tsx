@@ -10,12 +10,12 @@ const buttonVariants = cva(
                 default:
                     "bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-light)] shadow-sm",
                 destructive:
-                    "bg-red-500 text-white hover:bg-red-600 shadow-sm",
+                    "bg-[var(--color-down)] text-white hover:bg-[var(--color-down)]/90 shadow-sm",
                 outline:
                     "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
                 secondary:
                     "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-                ghost: "hover:bg-gray-100 hover:text-gray-900",
+                ghost: "hover:bg-[var(--color-sidebar-bg)] hover:text-[var(--color-text)]",
                 link: "text-primary underline-offset-4 hover:underline",
                 sketchy:
                     "font-hand text-lg border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white transition-all rounded-sm",

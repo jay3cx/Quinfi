@@ -89,7 +89,7 @@ export default function ComparePage() {
                                 />
                                 <button
                                     onClick={() => removeCode(idx)}
-                                    className="p-1.5 text-slate-400 hover:text-red-500 transition-colors disabled:opacity-30"
+                                    className="p-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-down)] transition-colors disabled:opacity-30"
                                     disabled={codes.length <= 2}
                                 >
                                     <Trash2 className="w-4 h-4" />
@@ -110,7 +110,7 @@ export default function ComparePage() {
                                 <select
                                     value={days}
                                     onChange={e => setDays(e.target.value)}
-                                    className="h-8 px-2 text-sm border rounded-md bg-white text-slate-700"
+                                    className="h-8 px-2 text-sm border rounded-md bg-white text-[var(--color-text)]"
                                 >
                                     <option value="180">近半年</option>
                                     <option value="365">近一年</option>
@@ -124,7 +124,7 @@ export default function ComparePage() {
                             </div>
                         </div>
 
-                        {error ? <p className="text-sm text-red-500 mt-2">{error}</p> : null}
+                        {error ? <p className="text-sm text-[var(--color-down)] mt-2">{error}</p> : null}
                     </CardContent>
                 </Card>
 
@@ -138,7 +138,7 @@ export default function ComparePage() {
                                 <CardContent>
                                     <ResponsiveContainer width="100%" height={360}>
                                         <LineChart data={mergedCurve}>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#E8E5DE" />
                                             <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={d => d.slice(5)} />
                                             <YAxis tick={{ fontSize: 11 }} domain={["auto", "auto"]} />
                                             <Tooltip />
@@ -167,7 +167,7 @@ export default function ComparePage() {
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-sm">
                                         <thead>
-                                            <tr className="border-b text-left text-slate-500">
+                                            <tr className="border-b text-left text-[var(--color-text-secondary)]">
                                                 <th className="pb-2 pr-4">基金</th>
                                                 <th className="pb-2 pr-4">累计收益</th>
                                                 <th className="pb-2 pr-4">年化收益</th>
@@ -179,7 +179,7 @@ export default function ComparePage() {
                                         </thead>
                                         <tbody>
                                             {result.funds.map((f, idx) => (
-                                                <tr key={f.code} className="border-b border-slate-100">
+                                                <tr key={f.code} className="border-b border-[var(--color-border)]">
                                                     <td className="py-2 pr-4 font-medium">
                                                         <span className="inline-block w-2.5 h-2.5 rounded-full mr-2" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
                                                         {f.name}({f.code})
@@ -213,21 +213,21 @@ export default function ComparePage() {
                                                 <tr>
                                                     <th className="pb-2 pr-4" />
                                                     {result.correlation_matrix.codes.map(c => (
-                                                        <th key={c} className="pb-2 px-3 text-center text-slate-500 font-normal">{c}</th>
+                                                        <th key={c} className="pb-2 px-3 text-center text-[var(--color-text-secondary)] font-normal">{c}</th>
                                                     ))}
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {result.correlation_matrix.codes.map((rowCode, i) => (
                                                     <tr key={rowCode}>
-                                                        <td className="py-1.5 pr-4 text-slate-500">{rowCode}</td>
+                                                        <td className="py-1.5 pr-4 text-[var(--color-text-secondary)]">{rowCode}</td>
                                                         {result.correlation_matrix.values[i].map((val, j) => (
                                                             <td key={j} className="py-1.5 px-3 text-center">
                                                                 <span
                                                                     className="inline-block px-2 py-0.5 rounded text-xs font-medium"
                                                                     style={{
                                                                         backgroundColor: corrColor(val),
-                                                                        color: val > 0.5 ? "#fff" : "#334155",
+                                                                        color: val > 0.5 ? "#fff" : "#2D2B28",
                                                                     }}
                                                                 >
                                                                     {val.toFixed(3)}
@@ -239,7 +239,7 @@ export default function ComparePage() {
                                             </tbody>
                                         </table>
                                     </div>
-                                    <div className="mt-3 text-xs text-slate-400">
+                                    <div className="mt-3 text-xs text-[var(--color-text-muted)]">
                                         相关性越低，组合分散效果越好。低于 0.3 为低相关，0.3-0.7 为中等相关，高于 0.7 为高相关。
                                     </div>
                                 </CardContent>

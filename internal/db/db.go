@@ -142,6 +142,17 @@ CREATE TABLE IF NOT EXISTS holdings_snapshot (
 );
 CREATE INDEX IF NOT EXISTS idx_holdings_code_quarter ON holdings_snapshot(fund_code, quarter DESC);
 
+-- 用户持仓表
+CREATE TABLE IF NOT EXISTS user_holdings (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	fund_code TEXT NOT NULL UNIQUE,
+	fund_name TEXT NOT NULL DEFAULT '',
+	shares REAL NOT NULL DEFAULT 0,
+	cost REAL NOT NULL DEFAULT 0,
+	created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 -- 异步任务表
 CREATE TABLE IF NOT EXISTS tasks (
 	id TEXT PRIMARY KEY,
