@@ -71,6 +71,17 @@ func (r *FundRepository) GetNAVHistory(ctx context.Context, code, startDate, end
 	return navList, rows.Err()
 }
 
+// GetLatestUnitNAV 查询基金最新单位净值
+func (r *FundRepository) GetLatestUnitNAV(ctx context.Context, code string) (float64, error) {
+	var nav float64
+	err := r.db.QueryRowContext(ctx,
+		`SELECT unit_nav FROM nav_history WHERE fund_code = ? ORDER BY date DESC LIMIT 1`, code).Scan(&nav)
+	if err != nil {
+		return 0, fmt.Errorf("查询最新净值失败: %w", err)
+	}
+	return nav, nil
+}
+
 // SaveHoldingsSnapshot 保存持仓快照
 func (r *FundRepository) SaveHoldingsSnapshot(ctx context.Context, code, quarter string, holdings []datasource.Holding) error {
 	tx, err := r.db.BeginTx(ctx, nil)

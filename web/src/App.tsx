@@ -21,7 +21,7 @@ function App() {
 
     return (
         <BrowserRouter>
-            <Suspense fallback={<div className="flex-1 flex items-center justify-center text-slate-400">加载中...</div>}>
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center text-[var(--color-text-muted)]">加载中...</div>}>
                 <Routes>
                     <Route element={<Layout />}>
                         <Route path="/" element={<Navigate to="/chat" replace />} />

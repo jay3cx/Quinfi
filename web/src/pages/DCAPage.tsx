@@ -64,7 +64,7 @@ export default function DCAPage() {
                     <CardContent>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
-                                <label className="text-xs text-slate-500 mb-1 block">基金代码</label>
+                                <label className="text-xs text-[var(--color-text-secondary)] mb-1 block">基金代码</label>
                                 <Input
                                     variant="boxed"
                                     placeholder="如 005827"
@@ -75,7 +75,7 @@ export default function DCAPage() {
                                 />
                             </div>
                             <div>
-                                <label className="text-xs text-slate-500 mb-1 block">每期金额（元）</label>
+                                <label className="text-xs text-[var(--color-text-secondary)] mb-1 block">每期金额（元）</label>
                                 <Input
                                     variant="boxed"
                                     placeholder="1000"
@@ -87,11 +87,11 @@ export default function DCAPage() {
                                 />
                             </div>
                             <div>
-                                <label className="text-xs text-slate-500 mb-1 block">策略</label>
+                                <label className="text-xs text-[var(--color-text-secondary)] mb-1 block">策略</label>
                                 <select
                                     value={strategy}
                                     onChange={e => setStrategy(e.target.value)}
-                                    className="w-full h-10 px-3 text-sm border rounded-md bg-white text-slate-700"
+                                    className="w-full h-10 px-3 text-sm border rounded-md bg-white text-[var(--color-text)]"
                                 >
                                     <option value="fixed">固定金额</option>
                                     <option value="value">目标价值</option>
@@ -99,11 +99,11 @@ export default function DCAPage() {
                                 </select>
                             </div>
                             <div>
-                                <label className="text-xs text-slate-500 mb-1 block">模拟周期</label>
+                                <label className="text-xs text-[var(--color-text-secondary)] mb-1 block">模拟周期</label>
                                 <select
                                     value={days}
                                     onChange={e => setDays(e.target.value)}
-                                    className="w-full h-10 px-3 text-sm border rounded-md bg-white text-slate-700"
+                                    className="w-full h-10 px-3 text-sm border rounded-md bg-white text-[var(--color-text)]"
                                 >
                                     <option value="365">1 年</option>
                                     <option value="730">2 年</option>
@@ -121,7 +121,7 @@ export default function DCAPage() {
                             </Button>
                         </div>
 
-                        {error ? <p className="text-sm text-red-500 mt-2">{error}</p> : null}
+                        {error ? <p className="text-sm text-[var(--color-down)] mt-2">{error}</p> : null}
                     </CardContent>
                 </Card>
 
@@ -148,12 +148,12 @@ export default function DCAPage() {
                                 <CardContent>
                                     <ResponsiveContainer width="100%" height={320}>
                                         <LineChart data={valueCurveData}>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#E8E5DE" />
                                             <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={d => d.slice(5)} />
                                             <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
                                             <Tooltip formatter={(v) => `¥${Number(v).toLocaleString()}`} />
                                             <Legend />
-                                            <Line type="monotone" dataKey="invested" stroke="#64748b" strokeWidth={1.5} dot={false} name="累计投入" />
+                                            <Line type="monotone" dataKey="invested" stroke="#9B9590" strokeWidth={1.5} dot={false} name="累计投入" />
                                             <Line type="monotone" dataKey="value" stroke="#166534" strokeWidth={2} dot={false} name="市值" />
                                         </LineChart>
                                     </ResponsiveContainer>
@@ -169,7 +169,7 @@ export default function DCAPage() {
                                     <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
                                         <table className="w-full text-sm">
                                             <thead className="sticky top-0 bg-white">
-                                                <tr className="border-b text-left text-slate-500">
+                                                <tr className="border-b text-left text-[var(--color-text-secondary)]">
                                                     <th className="pb-2 pr-3">日期</th>
                                                     <th className="pb-2 pr-3">净值</th>
                                                     <th className="pb-2 pr-3">投入</th>
@@ -180,7 +180,7 @@ export default function DCAPage() {
                                             </thead>
                                             <tbody>
                                                 {result.transactions.map(t => (
-                                                    <tr key={t.date} className="border-b border-slate-100">
+                                                    <tr key={t.date} className="border-b border-[var(--color-border)]">
                                                         <td className="py-1.5 pr-3">{t.date}</td>
                                                         <td className="py-1.5 pr-3">{t.nav.toFixed(4)}</td>
                                                         <td className="py-1.5 pr-3">¥{t.amount.toFixed(0)}</td>
@@ -208,11 +208,11 @@ function MetricCard({ label, value, positive }: { label: string; value: string; 
     return (
         <Card>
             <CardContent className="p-4">
-                <div className="text-xs text-slate-500 mb-1">{label}</div>
+                <div className="text-xs text-[var(--color-text-secondary)] mb-1">{label}</div>
                 <div className={`text-xl font-semibold ${
                     positive === true ? "text-[var(--color-up)]"
                         : positive === false ? "text-[var(--color-down)]"
-                            : "text-slate-800"
+                            : "text-[var(--color-text)]"
                 }`}>
                     {value}
                 </div>

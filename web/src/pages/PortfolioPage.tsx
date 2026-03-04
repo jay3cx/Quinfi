@@ -9,10 +9,10 @@ import type { ScanHolding } from "@/types"
 interface HoldingItem {
     code: string
     name: string
-    amount?: number
-    weight?: number
-    totalProfit?: number
-    totalProfitRate?: number
+    shares: number
+    cost: number
+    amount: number
+    weight: number
 }
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024 // 5MB
@@ -30,8 +30,9 @@ export default function PortfolioPage() {
     const [scanError, setScanError] = useState("")
     const fileInputRef = useRef<HTMLInputElement>(null)
 
-    const totalAmount = holdings.reduce((sum, h) => sum + (h.amount || 0), 0)
-    const totalProfit = holdings.reduce((sum, h) => sum + (h.totalProfit || 0), 0)
+    const totalAmount = holdings.reduce((sum, h) => sum + h.amount, 0)
+    const totalCost = holdings.reduce((sum, h) => sum + h.cost, 0)
+    const totalProfit = totalAmount - totalCost
 
     useEffect(() => {
         getPortfolio().then((res) => {
@@ -39,10 +40,10 @@ export default function PortfolioPage() {
                 setHoldings(res.data.map((h) => ({
                     code: h.code,
                     name: h.name || `基金 ${h.code}`,
+                    shares: h.shares || 0,
+                    cost: h.cost || 0,
                     amount: h.amount || 0,
                     weight: h.weight || 0,
-                    totalProfit: h.total_profit,
-                    totalProfitRate: h.total_profit_rate,
                 })))
             }
         }).catch((err) => {
@@ -55,7 +56,7 @@ export default function PortfolioPage() {
         if (holdings.some((h) => h.code === newCode)) return
 
         const code = newCode
-        setHoldings((prev) => [...prev, { code, name: "加载中..." }])
+        setHoldings((prev) => [...prev, { code, name: "加载中...", shares: 0, cost: 0, amount: 0, weight: 0 }])
         setNewCode("")
         setShowAddDialog(false)
 
@@ -66,7 +67,7 @@ export default function PortfolioPage() {
                 setHoldings((prev) =>
                     prev.map((h) => (h.code === code ? { ...h, name } : h))
                 )
-                addPortfolioHolding(code, name).catch((err) => {
+                addPortfolioHolding(code, name, 0, 0).catch((err) => {
                     console.error("[PortfolioPage] Failed to persist holding:", err)
                 })
             })
@@ -136,8 +137,8 @@ export default function PortfolioPage() {
 
         for (const h of scanResults) {
             if (!holdings.some((ex) => ex.code === h.code)) {
-                setHoldings((prev) => [...prev, { code: h.code, name: h.name, amount: h.amount }])
-                await addPortfolioHolding(h.code, h.name, h.amount).catch(() => {})
+                setHoldings((prev) => [...prev, { code: h.code, name: h.name, shares: 0, cost: h.amount, amount: h.amount, weight: 0 }])
+                await addPortfolioHolding(h.code, h.name, 0, h.amount).catch(() => {})
             }
         }
         setScanResults(null)
@@ -183,9 +184,9 @@ export default function PortfolioPage() {
 
                 {/* 截图识别错误 */}
                 {scanError && (
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-6 flex items-center justify-between">
-                        <span className="text-sm text-red-700">{scanError}</span>
-                        <button onClick={dismissScan} className="text-red-400 hover:text-red-600">
+                    <div className="bg-[var(--color-down)]/[0.06] border border-[var(--color-down)]/20 rounded-lg p-3 mb-6 flex items-center justify-between">
+                        <span className="text-sm text-[var(--color-down)]">{scanError}</span>
+                        <button onClick={dismissScan} className="text-[var(--color-down)]/60 hover:text-[var(--color-down)]">
                             <X className="w-4 h-4" />
                         </button>
                     </div>
@@ -266,7 +267,7 @@ export default function PortfolioPage() {
                             </Button>
                         </div>
                         <p className="text-xs text-[var(--color-text-muted)] mt-2">
-                            也可以在对话中告诉 Quinfi"我持有 005827"，记忆系统会自动记录。
+                            也可以在对话中告诉 Quinfi"我持有 005827"，系统会自动记录。
                         </p>
                     </div>
                 )}
@@ -309,7 +310,7 @@ export default function PortfolioPage() {
                                     <span className="text-base font-normal text-[var(--color-text-muted)] ml-1.5">元</span>
                                 </div>
                                 <div className="flex items-center gap-3 mt-1.5">
-                                    {totalProfit !== 0 && (
+                                    {totalCost > 0 && totalProfit !== 0 && (
                                         <span className={`text-sm tabular-nums ${totalProfit >= 0 ? "text-[var(--color-up)]" : "text-[var(--color-down)]"}`}>
                                             {totalProfit >= 0 ? "+" : ""}{totalProfit.toFixed(2)}
                                         </span>
@@ -339,18 +340,18 @@ export default function PortfolioPage() {
                                         </div>
                                     </div>
 
-                                    {/* 右侧：金额 + 仓位标签 */}
+                                    {/* 右侧：市值 + 盈亏 */}
                                     <div className="text-right shrink-0 flex items-center gap-3">
-                                        {h.amount && h.amount > 0 ? (
+                                        {h.amount > 0 ? (
                                             <div>
                                                 <div className="text-sm tabular-nums font-medium text-[var(--color-text)]">
                                                     {h.amount.toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </div>
-                                                {h.totalProfitRate != null ? (
-                                                    <div className={`text-xs tabular-nums mt-0.5 ${(h.totalProfit ?? 0) >= 0 ? "text-[var(--color-up)]" : "text-[var(--color-down)]"}`}>
-                                                        {(h.totalProfitRate ?? 0) >= 0 ? "+" : ""}{(h.totalProfitRate ?? 0).toFixed(2)}%
+                                                {h.cost > 0 ? (
+                                                    <div className={`text-xs tabular-nums mt-0.5 ${h.amount >= h.cost ? "text-[var(--color-up)]" : "text-[var(--color-down)]"}`}>
+                                                        {h.amount >= h.cost ? "+" : ""}{((h.amount - h.cost) / h.cost * 100).toFixed(2)}%
                                                     </div>
-                                                ) : h.weight && h.weight > 0 ? (
+                                                ) : h.weight > 0 ? (
                                                     <div className="text-xs text-[var(--color-text-muted)] mt-0.5">
                                                         {h.weight.toFixed(1)}%
                                                     </div>
@@ -360,7 +361,7 @@ export default function PortfolioPage() {
 
                                         {/* 移除 */}
                                         <button
-                                            className="shrink-0 p-1 rounded text-[var(--color-text-muted)] opacity-0 group-hover:opacity-100 hover:text-[var(--color-down)] hover:bg-red-50 transition-all"
+                                            className="shrink-0 p-1 rounded text-[var(--color-text-muted)] opacity-0 group-hover:opacity-100 hover:text-[var(--color-down)] hover:bg-[var(--color-down)]/[0.06] transition-all"
                                             onClick={(e) => {
                                                 e.stopPropagation()
                                                 removeHolding(h.code)

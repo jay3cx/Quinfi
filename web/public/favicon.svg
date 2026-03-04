@@ -1,18 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="82 68 348 348" role="img">
-  <title>Quinfi - Bloom</title>
-  <defs>
-    <!-- Single petal: elegant pointed oval -->
-    <path id="petal7" d="M256,80 C286,188 286,300 256,380 C226,300 226,188 256,80Z"/>
-  </defs>
-  <!-- 5 petals with natural overlap create a flower pattern -->
-  <g fill="#C96442">
-    <use href="#petal7"/>
-    <use href="#petal7" transform="rotate(72, 256, 256)"/>
-    <use href="#petal7" transform="rotate(144, 256, 256)"/>
-    <use href="#petal7" transform="rotate(216, 256, 256)"/>
-    <use href="#petal7" transform="rotate(288, 256, 256)"/>
-  </g>
-  <!-- Center circle adds a focal point -->
-  <circle cx="256" cy="256" r="36" fill="#FAF9F5"/>
-  <circle cx="256" cy="256" r="20" fill="#C96442"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img">
+  <title>Quinfi</title>
+  <path d="M50,13 A74,74 0 0,1 87,77.09 A74,74 0 0,1 13,77.09 A74,74 0 0,1 50,13Z"
+        fill="#C96442" stroke="#C96442" stroke-width="12" stroke-linejoin="round"/>
 </svg>

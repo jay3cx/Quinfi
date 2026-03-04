@@ -156,9 +156,13 @@ func SetupRouter(cfg *config.Config, db *sql.DB) *SetupResult {
 
 	// ====== 记忆系统 ======
 	memStore, memExtractor := createMemorySystem(db, agentClient, toolRegistry)
-	if memStore != nil {
-		registerPortfolioTool(toolRegistry, memStore)
-		registerPortfolioAPI(v1, memStore, visionScanner)
+
+	// ====== 持仓管理（user_holdings 表） ======
+	var holdingsRepo *funddb.UserHoldingsRepo
+	if db != nil {
+		holdingsRepo = funddb.NewUserHoldingsRepo(db)
+		registerPortfolioTool(toolRegistry, holdingsRepo, fundRepo)
+		registerPortfolioAPI(v1, holdingsRepo, visionScanner, fundRepo)
 	}
 
 	// ====== HTTP 路由注册 ======
@@ -267,11 +271,11 @@ func createMemorySystem(db *sql.DB, llmClient llm.Client, tools *agent.ToolRegis
 }
 
 // registerPortfolioTool 注册持仓管理工具
-func registerPortfolioTool(toolRegistry *agent.ToolRegistry, memStore *memory.Store) {
-	portfolioMgr := portfolio.NewManager(memStore)
+func registerPortfolioTool(toolRegistry *agent.ToolRegistry, repo *funddb.UserHoldingsRepo, fundRepo *funddb.FundRepository) {
+	portfolioMgr := portfolio.NewManager(repo, fundRepo)
 	toolRegistry.Register(agent.NewGetPortfolioTool(
 		agent.NewPortfolioAdapter(func(ctx context.Context) string {
-			p, err := portfolioMgr.GetPortfolio(ctx, "default")
+			p, err := portfolioMgr.GetPortfolio(ctx)
 			if err != nil {
 				return "获取持仓失败: " + err.Error()
 			}
@@ -281,12 +285,12 @@ func registerPortfolioTool(toolRegistry *agent.ToolRegistry, memStore *memory.St
 }
 
 // registerPortfolioAPI 注册持仓 REST API
-func registerPortfolioAPI(v1 *gin.RouterGroup, memStore *memory.Store, scanner *vision.Scanner) {
-	portfolioMgrAPI := portfolio.NewManager(memStore)
+func registerPortfolioAPI(v1 *gin.RouterGroup, repo *funddb.UserHoldingsRepo, scanner *vision.Scanner, fundRepo *funddb.FundRepository) {
+	portfolioMgr := portfolio.NewManager(repo, fundRepo)
 
 	// 查询持仓
 	v1.GET("/portfolio", func(c *gin.Context) {
-		p, err := portfolioMgrAPI.GetPortfolio(c.Request.Context(), "default")
+		p, err := portfolioMgr.GetPortfolio(c.Request.Context())
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -298,12 +302,13 @@ func registerPortfolioAPI(v1 *gin.RouterGroup, memStore *memory.Store, scanner *
 		})
 	})
 
-	// 添加持仓 — 向记忆系统写入一条 fact
+	// 添加持仓
 	v1.POST("/portfolio", func(c *gin.Context) {
 		var req struct {
 			Code   string  `json:"code" binding:"required"`
 			Name   string  `json:"name"`
-			Amount float64 `json:"amount"` // 持有金额（元），可选
+			Shares float64 `json:"shares"`
+			Cost   float64 `json:"cost"`
 		}
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "请提供基金代码 code"})
@@ -314,23 +319,14 @@ func registerPortfolioAPI(v1 *gin.RouterGroup, memStore *memory.Store, scanner *
 			return
 		}
 
-		// 使用统一格式，与 portfolio.parseHoldingFromMemory 兼容
-		content := portfolio.FormatMemoryContent(req.Code, req.Name, req.Amount)
-
-		entry := memory.MemoryEntry{
-			UserID:     "default",
-			Type:       memory.TypeFact,
-			Content:    content,
-			Importance: 0.9,
-		}
-		if err := memStore.Save(c.Request.Context(), []memory.MemoryEntry{entry}); err != nil {
+		if err := repo.Upsert(c.Request.Context(), req.Code, req.Name, req.Shares, req.Cost); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "保存持仓失败: " + err.Error()})
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"status": "ok", "code": req.Code})
 	})
 
-	// 删除持仓 — 使包含该基金代码的持仓记忆失效
+	// 删除持仓
 	v1.DELETE("/portfolio/:code", func(c *gin.Context) {
 		code := c.Param("code")
 		if len(code) != 6 {
@@ -338,30 +334,18 @@ func registerPortfolioAPI(v1 *gin.RouterGroup, memStore *memory.Store, scanner *
 			return
 		}
 
-		// 找到包含该代码的持仓记忆并使其失效
-		memories, err := memStore.Recall(c.Request.Context(), "default", "持有 "+code, 20)
-		if err != nil {
+		if err := repo.Delete(c.Request.Context(), code); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-
-		invalidated := 0
-		for _, mem := range memories {
-			if mem.Type == memory.TypeFact && strings.Contains(mem.Content, code) && strings.Contains(mem.Content, "持有") {
-				if err := memStore.Invalidate(c.Request.Context(), mem.ID); err == nil {
-					invalidated++
-				}
-			}
-		}
-
-		c.JSON(http.StatusOK, gin.H{"status": "ok", "invalidated": invalidated})
+		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
 	// 截图识别持仓
 	v1.POST("/portfolio/scan", func(c *gin.Context) {
 		var req struct {
-			Image   string `json:"image" binding:"required"` // base64 编码的图片（支持 data URI）
-			AutoAdd bool   `json:"auto_add"`                 // 是否自动添加到持仓
+			Image   string `json:"image" binding:"required"`
+			AutoAdd bool   `json:"auto_add"`
 		}
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "请提供 image 字段（base64 编码的持仓截图）"})
@@ -385,23 +369,19 @@ func registerPortfolioAPI(v1 *gin.RouterGroup, memStore *memory.Store, scanner *
 
 		// 自动添加到持仓
 		if req.AutoAdd && len(result.Holdings) > 0 {
-			added := 0
+			var batch []funddb.UserHolding
 			for _, h := range result.Holdings {
-				content := portfolio.FormatMemoryContentFull(h.Code, h.Name, h.Amount, h.TotalProfit, h.TotalProfitRate)
-				entry := memory.MemoryEntry{
-					UserID:     "default",
-					Type:       memory.TypeFact,
-					Content:    content,
-					Importance: 0.9,
-				}
-				if err := memStore.Save(c.Request.Context(), []memory.MemoryEntry{entry}); err == nil {
-					added++
-				}
+				batch = append(batch, funddb.UserHolding{
+					FundCode: h.Code,
+					FundName: h.Name,
+					Cost:     h.Amount, // 截图识别的金额作为成本
+				})
 			}
+			_ = repo.UpsertBatch(c.Request.Context(), batch)
 			c.JSON(http.StatusOK, gin.H{
 				"holdings":    result.Holdings,
 				"total_value": result.TotalValue,
-				"auto_added":  added,
+				"auto_added":  len(batch),
 			})
 			return
 		}

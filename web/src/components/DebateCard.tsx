@@ -16,7 +16,7 @@ export function DebateCard({ content }: DebateCardProps) {
     return (
         <div className="space-y-3 my-4">
             {bullMatch && (
-                <div className="rounded-lg border border-green-200 bg-green-50/50 p-4">
+                <div className="rounded-lg border border-[var(--color-up)]/20 bg-[var(--color-up)]/[0.06] p-4">
                     <div className="flex items-center gap-2 mb-2">
                         <TrendingUp className="w-4 h-4 text-[var(--color-up)]" />
                         <span className="text-sm font-semibold text-[var(--color-up)]">看多方</span>
@@ -28,7 +28,7 @@ export function DebateCard({ content }: DebateCardProps) {
             )}
 
             {bearMatch && (
-                <div className="rounded-lg border border-red-200 bg-red-50/50 p-4">
+                <div className="rounded-lg border border-[var(--color-down)]/20 bg-[var(--color-down)]/[0.06] p-4">
                     <div className="flex items-center gap-2 mb-2">
                         <TrendingDown className="w-4 h-4 text-[var(--color-down)]" />
                         <span className="text-sm font-semibold text-[var(--color-down)]">看空方</span>

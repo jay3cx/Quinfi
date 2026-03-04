@@ -376,7 +376,7 @@ export default function FundDetailPage() {
 
                     {/* Deep Analysis Error */}
                     {deepError && (
-                        <div className="mt-6 p-4 rounded-lg bg-red-50 border border-red-200 text-sm text-[var(--color-down)]">
+                        <div className="mt-6 p-4 rounded-lg bg-[var(--color-down)]/[0.06] border border-[var(--color-down)]/20 text-sm text-[var(--color-down)]">
                             深度分析失败: {deepError}
                         </div>
                     )}

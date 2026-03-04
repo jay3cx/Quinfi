@@ -4,10 +4,10 @@ import type { DebateArgument, DebateVerdict, DebateResult, DebatePhaseKey, Debat
 // 阶段定义
 const PHASES = [
     { key: "data_gather", label: "数据收集", icon: Database, color: "text-[var(--color-text-muted)]", border: "border-[var(--color-border)]", bg: "bg-[var(--color-sidebar-bg)]/30" },
-    { key: "bull_case", label: "Bull 立论", icon: TrendingUp, color: "text-[var(--color-up)]", border: "border-green-200", bg: "bg-green-50/50" },
-    { key: "bear_case", label: "Bear 立论", icon: TrendingDown, color: "text-[var(--color-down)]", border: "border-red-200", bg: "bg-red-50/50" },
-    { key: "bull_rebuttal", label: "Bull 反驳", icon: TrendingUp, color: "text-[var(--color-up)]", border: "border-green-200/60", bg: "bg-green-50/30" },
-    { key: "bear_rebuttal", label: "Bear 反驳", icon: TrendingDown, color: "text-[var(--color-down)]", border: "border-red-200/60", bg: "bg-red-50/30" },
+    { key: "bull_case", label: "Bull 立论", icon: TrendingUp, color: "text-[var(--color-up)]", border: "border-[var(--color-up)]/20", bg: "bg-[var(--color-up)]/[0.06]" },
+    { key: "bear_case", label: "Bear 立论", icon: TrendingDown, color: "text-[var(--color-down)]", border: "border-[var(--color-down)]/20", bg: "bg-[var(--color-down)]/[0.06]" },
+    { key: "bull_rebuttal", label: "Bull 反驳", icon: TrendingUp, color: "text-[var(--color-up)]", border: "border-[var(--color-up)]/15", bg: "bg-[var(--color-up)]/[0.04]" },
+    { key: "bear_rebuttal", label: "Bear 反驳", icon: TrendingDown, color: "text-[var(--color-down)]", border: "border-[var(--color-down)]/15", bg: "bg-[var(--color-down)]/[0.04]" },
     { key: "judge_verdict", label: "裁判裁决", icon: Scale, color: "text-[var(--color-primary)]", border: "border-[var(--color-primary)]/30", bg: "bg-[var(--color-primary-bg)]/50" },
 ] as const
 
@@ -60,7 +60,7 @@ function ArgumentCard({ arg, phaseConfig }: { arg: DebateArgument; phaseConfig: 
 
 const GATE_LABELS: Record<string, { label: string; color: string; Icon: typeof ShieldCheck }> = {
     pass: { label: "可信", color: "text-[var(--color-up)]", Icon: ShieldCheck },
-    degrade: { label: "证据不足", color: "text-amber-600", Icon: ShieldAlert },
+    degrade: { label: "证据不足", color: "text-[var(--color-warn)]", Icon: ShieldAlert },
     review: { label: "复核中", color: "text-[var(--color-text-muted)]", Icon: ShieldAlert },
 }
 
@@ -115,12 +115,12 @@ function VerdictCard({ verdict, systemConfidence, decisionGate }: {
                 )}
             </div>
             {verdict.risk_warnings && verdict.risk_warnings.length > 0 && (
-                <div className="mt-3 p-2.5 rounded bg-amber-50/60 border border-amber-200/40">
+                <div className="mt-3 p-2.5 rounded bg-[var(--color-warn)]/[0.06] border border-[var(--color-warn)]/20">
                     <div className="flex items-center gap-1.5 mb-1.5">
-                        <AlertTriangle className="w-3 h-3 text-amber-600" />
-                        <span className="text-xs font-medium text-amber-700">风险提示</span>
+                        <AlertTriangle className="w-3 h-3 text-[var(--color-warn)]" />
+                        <span className="text-xs font-medium text-[var(--color-warn)]">风险提示</span>
                     </div>
-                    <ul className="text-xs text-amber-800/70 space-y-0.5 ml-4 list-disc">
+                    <ul className="text-xs text-[var(--color-warn)]/80 space-y-0.5 ml-4 list-disc">
                         {verdict.risk_warnings.map((w, i) => <li key={i}>{w}</li>)}
                     </ul>
                 </div>

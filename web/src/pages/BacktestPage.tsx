@@ -105,7 +105,7 @@ export default function BacktestPage() {
                                 />
                                 <button
                                     onClick={() => removeHolding(idx)}
-                                    className="p-1.5 text-slate-400 hover:text-red-500 transition-colors disabled:opacity-30"
+                                    className="p-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-down)] transition-colors disabled:opacity-30"
                                     disabled={holdings.length <= 2}
                                 >
                                     <Trash2 className="w-4 h-4" />
@@ -123,7 +123,7 @@ export default function BacktestPage() {
                                 >
                                     <Plus className="w-4 h-4 mr-1" /> 添加基金
                                 </Button>
-                                <span className={`text-xs ${Math.abs(totalWeight - 1) < 0.01 ? "text-green-600" : "text-amber-600"}`}>
+                                <span className={`text-xs ${Math.abs(totalWeight - 1) < 0.01 ? "text-[var(--color-up)]" : "text-[var(--color-warn)]"}`}>
                                     权重合计: {totalWeight.toFixed(2)}
                                 </span>
                             </div>
@@ -132,7 +132,7 @@ export default function BacktestPage() {
                                 <select
                                     value={days}
                                     onChange={e => setDays(e.target.value)}
-                                    className="h-8 px-2 text-sm border rounded-md bg-white text-slate-700"
+                                    className="h-8 px-2 text-sm border rounded-md bg-white text-[var(--color-text)]"
                                 >
                                     <option value="180">近半年</option>
                                     <option value="365">近一年</option>
@@ -146,7 +146,7 @@ export default function BacktestPage() {
                             </div>
                         </div>
 
-                        {error ? <p className="text-sm text-red-500 mt-2">{error}</p> : null}
+                        {error ? <p className="text-sm text-[var(--color-down)] mt-2">{error}</p> : null}
                     </CardContent>
                 </Card>
 
@@ -178,7 +178,7 @@ export default function BacktestPage() {
                                 <CardContent>
                                     <ResponsiveContainer width="100%" height={320}>
                                         <LineChart data={result.equity_curve}>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#E8E5DE" />
                                             <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={d => d.slice(5)} />
                                             <YAxis tick={{ fontSize: 11 }} />
                                             <Tooltip />
@@ -196,7 +196,7 @@ export default function BacktestPage() {
                                 <CardContent>
                                     <ResponsiveContainer width="100%" height={200}>
                                         <AreaChart data={result.drawdown_curve}>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#E8E5DE" />
                                             <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={d => d.slice(5)} />
                                             <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `${(v * 100).toFixed(0)}%`} />
                                             <Tooltip formatter={(v) => `${(Number(v) * 100).toFixed(2)}%`} />
@@ -215,7 +215,7 @@ export default function BacktestPage() {
                                     <div className="overflow-x-auto">
                                         <table className="w-full text-sm">
                                             <thead>
-                                                <tr className="border-b text-left text-slate-500">
+                                                <tr className="border-b text-left text-[var(--color-text-secondary)]">
                                                     <th className="pb-2 pr-4">基金代码</th>
                                                     <th className="pb-2 pr-4">权重</th>
                                                     <th className="pb-2">累计收益</th>
@@ -223,7 +223,7 @@ export default function BacktestPage() {
                                             </thead>
                                             <tbody>
                                                 {result.fund_metrics.map(f => (
-                                                    <tr key={f.fund_code} className="border-b border-slate-100">
+                                                    <tr key={f.fund_code} className="border-b border-[var(--color-border)]">
                                                         <td className="py-2 pr-4 font-medium font-mono">{f.fund_code}</td>
                                                         <td className="py-2 pr-4">{(f.weight * 100).toFixed(0)}%</td>
                                                         <td className={`py-2 ${f.total_return >= 0 ? "text-[var(--color-up)]" : "text-[var(--color-down)]"}`}>{(f.total_return * 100).toFixed(2)}%</td>
@@ -246,11 +246,11 @@ function MetricCard({ label, value, positive }: { label: string; value: string; 
     return (
         <Card>
             <CardContent className="p-4">
-                <div className="text-xs text-slate-500 mb-1">{label}</div>
+                <div className="text-xs text-[var(--color-text-secondary)] mb-1">{label}</div>
                 <div className={`text-xl font-semibold ${
                     positive === true ? "text-[var(--color-up)]"
                         : positive === false ? "text-[var(--color-down)]"
-                            : "text-slate-800"
+                            : "text-[var(--color-text)]"
                 }`}>
                     {value}
                 </div>
