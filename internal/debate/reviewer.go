@@ -26,7 +26,7 @@ func (r *LLMReviewer) ReviewJudge(ctx context.Context, prompt string) (*Verdict,
 		return nil, fmt.Errorf("reviewer unavailable")
 	}
 	resp, err := r.client.Chat(ctx, &llm.ChatRequest{
-		Model: llm.ModelGLM5,
+		Model: llm.ModelClaudeOpus46,
 		Messages: []llm.Message{
 			{Role: llm.RoleSystem, Content: JudgeSystemPrompt},
 			{Role: llm.RoleUser, Content: prompt},

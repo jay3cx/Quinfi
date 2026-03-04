@@ -198,24 +198,34 @@ func (t *GetFundHoldingsTool) Execute(ctx context.Context, args map[string]any) 
 // ===== SearchNews 工具 =====
 
 // SearchNewsTool 搜索相关新闻资讯
+// 支持 Query Expansion：传入基金代码时，自动查持仓用重仓股名称搜新闻
 type SearchNewsTool struct {
 	store *rss.Store
+	ds    datasource.FundDataSource // 可选，用于基金持仓查询扩展
 }
 
-func NewSearchNewsTool(store *rss.Store) *SearchNewsTool {
-	return &SearchNewsTool{store: store}
+func NewSearchNewsTool(store *rss.Store, ds ...datasource.FundDataSource) *SearchNewsTool {
+	t := &SearchNewsTool{store: store}
+	if len(ds) > 0 {
+		t.ds = ds[0]
+	}
+	return t
 }
 
 func (t *SearchNewsTool) Name() string { return "search_news" }
 
 func (t *SearchNewsTool) Description() string {
-	return "搜索金融新闻资讯，可按关键词过滤。返回最新的相关新闻标题、摘要和情绪判断。"
+	return "搜索金融新闻资讯。支持两种模式：(1) 传入 fund_code 基金代码，自动用重仓股名称搜索相关新闻（推荐）；(2) 传入 keyword 关键词直接搜索。返回新闻标题、摘要和情绪判断。"
 }
 
 func (t *SearchNewsTool) Parameters() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
+			"fund_code": map[string]any{
+				"type":        "string",
+				"description": "6位基金代码。传入后自动查询持仓，用重仓股名称搜索相关新闻（Query Expansion）",
+			},
 			"keyword": map[string]any{
 				"type":        "string",
 				"description": "搜索关键词（可选，为空则返回最新资讯）",
@@ -229,20 +239,39 @@ func (t *SearchNewsTool) Parameters() map[string]any {
 }
 
 func (t *SearchNewsTool) Execute(ctx context.Context, args map[string]any) (string, error) {
+	fundCode := getStringArg(args, "fund_code")
 	keyword := getStringArg(args, "keyword")
 	limit := getIntArg(args, "limit", 5)
+
+	// Query Expansion: 基金代码 → 重仓股名称
+	expandedFrom := ""
+	if fundCode != "" && t.ds != nil {
+		if holdings, err := t.ds.GetFundHoldings(ctx, fundCode); err == nil && len(holdings) > 0 {
+			// 取前 5 大重仓股名称作为搜索词
+			var stockNames []string
+			for i, h := range holdings {
+				if i >= 5 {
+					break
+				}
+				stockNames = append(stockNames, h.StockName)
+			}
+			expandedFrom = fmt.Sprintf("基金 %s 前 %d 大重仓股", fundCode, len(stockNames))
+			keyword = strings.Join(stockNames, " ")
+		}
+	}
 
 	var articles []*rss.Article
 
 	if keyword != "" {
-		// 有关键词 → FTS5 全文搜索（自动降级为内存匹配）
 		articles = t.store.SearchArticles(keyword, limit)
 	} else {
-		// 无关键词 → 返回最新资讯
 		articles = t.store.GetAllArticles(limit)
 	}
 
 	if len(articles) == 0 {
+		if fundCode != "" {
+			return fmt.Sprintf("未找到与基金 %s 重仓股相关的新闻", fundCode), nil
+		}
 		if keyword != "" {
 			return fmt.Sprintf("未找到与 \"%s\" 相关的新闻", keyword), nil
 		}
@@ -250,6 +279,9 @@ func (t *SearchNewsTool) Execute(ctx context.Context, args map[string]any) (stri
 	}
 
 	var sb strings.Builder
+	if expandedFrom != "" {
+		sb.WriteString(fmt.Sprintf("通过 %s（%s）扩展搜索，", expandedFrom, keyword))
+	}
 	sb.WriteString(fmt.Sprintf("找到 %d 条相关资讯：\n\n", len(articles)))
 
 	for i, a := range articles {

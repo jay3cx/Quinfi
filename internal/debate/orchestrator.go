@@ -88,7 +88,7 @@ func (o *Orchestrator) RunDebate(ctx context.Context, fundCode string, onPhase .
 
 	dataText := fundCtx.FormatForLLM()
 
-	debateModel := llm.ModelGLM5
+	debateModel := llm.ModelClaudeOpus46
 
 	// Phase 2 & 3: Bull 立论 + Bear 立论（并发执行）
 	bullCaseCh := make(chan phaseOut, 1)
@@ -315,7 +315,7 @@ func (o *Orchestrator) runJudgePhase(ctx context.Context, result *DebateResult, 
 	logger.Info("辩论裁决阶段开始")
 
 	resp, err := o.client.Chat(ctx, &llm.ChatRequest{
-		Model: llm.ModelGLM5, // Gemini 3 Pro 裁决
+		Model: llm.ModelClaudeOpus46,
 		Messages: []llm.Message{
 			{Role: llm.RoleSystem, Content: JudgeSystemPrompt},
 			{Role: llm.RoleUser, Content: prompt},

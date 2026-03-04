@@ -97,11 +97,15 @@ export default function ChatPage() {
     const messages = currentData.messages
 
     // 只在用户已经在底部附近时才自动滚动（避免轮询更新打断阅读）
+    // programmaticScroll 标记：区分程序化滚动和用户手动滚动，防止竞态
     const isNearBottomRef = useRef(true)
+    const programmaticScrollRef = useRef(false)
     useEffect(() => {
         const el = scrollRef.current
         if (!el) return
         const onScroll = () => {
+            // 程序化滚动（含 scroll-smooth 动画期间）不更新标记
+            if (programmaticScrollRef.current) return
             isNearBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 100
         }
         el.addEventListener("scroll", onScroll, { passive: true })
@@ -110,7 +114,10 @@ export default function ChatPage() {
 
     useEffect(() => {
         if (isNearBottomRef.current && scrollRef.current) {
+            programmaticScrollRef.current = true
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+            // scroll-smooth 动画结束后解除标记（动画通常 < 300ms）
+            setTimeout(() => { programmaticScrollRef.current = false }, 300)
         }
     }, [messages])
 

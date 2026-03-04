@@ -50,7 +50,7 @@ type Extractor struct {
 func NewExtractor(client llm.Client) *Extractor {
 	return &Extractor{
 		client: client,
-		model:  llm.ModelGLM5,
+		model:  llm.ModelClaudeSonnet46,
 	}
 }
 

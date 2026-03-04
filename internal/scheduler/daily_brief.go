@@ -101,7 +101,7 @@ func (t *DailyBriefTask) Run(ctx context.Context) error {
 - 表格内换行使用 HTML <br> 标签`, data, time.Now().Format("2006-01-02"))
 
 	resp, err := t.client.Chat(ctx, &llm.ChatRequest{
-		Model:       llm.ModelGLM5,
+		Model:       llm.ModelClaudeSonnet46,
 		Messages:    []llm.Message{{Role: llm.RoleUser, Content: briefPrompt}},
 		MaxTokens:   0, // 不限制，由模型自行决定
 		Temperature: 0.3,

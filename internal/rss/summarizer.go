@@ -126,7 +126,7 @@ func (s *Summarizer) doSummarize(ctx context.Context, article *Article) error {
 	prompt := fmt.Sprintf(summaryPrompt, article.Title, content)
 
 	req := &llm.ChatRequest{
-		Model: llm.GetDefaultModel(llm.TaskLight), // 使用 Gemini Flash
+		Model: llm.ModelGemini25Flash, // 新闻摘要用 Gemini Flash（高频轻量任务）
 		Messages: []llm.Message{
 			{Role: llm.RoleUser, Content: prompt},
 		},
