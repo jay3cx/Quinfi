@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="5 8 90 90" role="img">
   <title>Quinfi</title>
-  <path d="M50,13 A74,74 0 0,1 87,77.09 A74,74 0 0,1 13,77.09 A74,74 0 0,1 50,13Z"
-        fill="#C96442" stroke="#C96442" stroke-width="12" stroke-linejoin="round"/>
+  <path d="M60.6,20.4 A74,74 0 0,1 85.9,64.2 Q88.3,77.8 75.3,82.5 A74,74 0 0,1 24.7,82.5 Q11.7,77.8 14.1,64.2 A74,74 0 0,1 39.4,20.4 Q50,11.5 60.6,20.4Z"
+        fill="#C96442"/>
 </svg>
